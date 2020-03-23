@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% block title %}私信{% endblock %}
+{% block styles %}
+{{super()}}
+<link href="{{ url_for('static',filename='css/message.css') }}" rel="stylesheet">
+{% endblock %}
+{% block container%}
+<div class="message panel panel-default">
+    <div class="panel-body">
+        <ul class="list-group">
+            {% for msg in msglist %}
+            <li class="list-group-item messageli">
+                {% if msg['head_url'] == None%}
+                <img class="userimg img-circle" src="{{ url_for('static',filename='img/bird_GT.bmp') }}">
+                {% else %}
+                <img class="userimg img-circle" src="{{msg['head_url']}}"/>
+                {% endif%}
+                <input type="hidden" value="{{msg['id']}}"/>
+                <label class="messagecontent">{{msg.content}}&nbsp;&nbsp;
+                    <a class="look">
+                        点击查看
+                    </a>
+                </label>
+                {% if msg['hasRead']==0 %}
+                <button type="button" class="noread btn btn-success">未读</button>
+                {% else%}
+                <button type="button" class="noread btn btn-danger disabled">已读</button>
+                {% endif%}
+                <p>{{msg['createtime']}}</p>
+            </li>
+            {% endfor %}
+        </ul>
+    </div>
+</div>
+<div class="modal fade" id="messagemodel" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+        <div id="messagemodel-part" class="modal-dialog">
+        </div>
+</div>
+{% endblock %}
+{% block scripts %}
+{{super()}}
+<script type="text/javascript" src="../static/js/message.js"></script>
+{% endblock %}

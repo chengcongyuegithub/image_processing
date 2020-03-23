@@ -1,0 +1,61 @@
+{% extends "bootstrap/base.html" %}
+{% block styles %}
+{{super()}}
+<link href="{{ url_for('static',filename='css/fileinput.min.css') }}" rel="stylesheet">
+{% endblock %}
+{% block navbar %}
+<nav class="navbar navbar-inverse">
+    <div class="container-fluid">
+        <div class="navbar-header">
+            <a class="navbar-brand" href="/">图片处理系统</a>
+        </div>
+        <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+            <ul class="nav navbar-nav">
+                <li><a href="/">首页</a></li>
+                <li><a href="">发布动态</a></li>
+                <li><a href="#" id="uploadbtn">图像上传</a></li>
+                <li><a href="">图像优化</a></li>
+            </ul>
+            <ul class="nav navbar-nav navbar-right">
+                {% if current_user.is_authenticated %}
+                <li class="dropdown">
+                <a id="username" href="#" class="dropdown-toggle" data-toggle="dropdown">
+                    <span><img src="{{current_user.head_url}}" width="20px",height="20px"></span>&nbsp;{{current_user.username}}<b class="caret"></b>
+                </a>
+                <ul class="dropdown-menu">
+                    <li><a href="/user/myspace"><span class="glyphicon glyphicon-user"></span>个人空间</a></li>
+                    <li class="divider"></li>
+                    <li><a href="#"><span class="glyphicon glyphicon-heart"></span>我的关注</a></li>
+                    <li class="divider"></li>
+                    <li><a href="/user/message"><span class="glyphicon glyphicon-envelope"></span>私信{{current_user.noreadmsg}}</a></li>
+                    <li class="divider"></li>
+                    <li><a href="#"><span class="glyphicon glyphicon-asterisk"></span>编辑</a></li>
+                    <li class="divider"></li>
+                    <li><a href="/user/logout"><span class="glyphicon glyphicon-log-out"></span>退出系统</a></li>
+                </ul>
+                {% else %}
+                <li><a href="/user/regloginpage"><span class="glyphicon glyphicon-log-in"></span>
+                    &nbsp;&nbsp;登陆/注册</a></li>
+                {% endif %}
+            </ul>
+        </div>
+    </div>
+</nav>
+{% endblock %}
+{% block content %}
+<div class="container">
+   {% block container%}{% endblock %}
+    <!--图片上传的模块-->
+    <div class="modal fade" id="model" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+        <div id="model-part" class="modal-dialog">
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+{% block scripts %}
+{{super()}}
+<script type="text/javascript" src="../static/js/upload.js"></script>
+<script type="text/javascript" src="../static/js/fileinput.min.js"></script>
+<script type="text/javascript" src="../static/js/zh.js"></script>
+{% endblock %}

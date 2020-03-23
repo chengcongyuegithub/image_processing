@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+{% block title %}个人空间{% endblock %}
+{% block styles %}
+<link href="{{ url_for('static',filename='css/user.css') }}" rel="stylesheet">
+{{super()}}
+{% endblock %}
+{% block container%}
+<div class="header panel panel-default">
+			<img class="userimg" src="{{user.head_url}}" />
+			<input type="hidden" id='userid'value="{{user.id}}"/>
+			<label class="text-success username">{{user.nickname}}</label>
+			<div class="numdiv">
+				<div class="numdivs">
+					<label class="numname text-success">动态数</label>
+					<a class="num">100</a>
+				</div>
+				<div class="numdivs">
+					<label class="numname text-success">获赞数</label>
+					<a class="num">200</a>
+				</div>
+				<div class="numdivs">
+					<label class="numname text-success">关注</label>
+					<a class="num">5</a>
+				</div>
+				<div class="numdivs">
+					<label class="numname text-success">被关注</label>
+					<a class="num">8</a>
+				</div>
+			</div>
+
+			{% if msgflag %}
+			<div class="sendmsgdiv">
+				<button type="button" class="sendmsgbtn btn btn-danger">私信</button>
+			</div>
+			<div class="followuserdiv">
+				<button type="button" class="followuserbtn btn btn-warning">关注</button>
+			</div>
+			{% else %}
+			<div class="editselfdiv">
+				<button type="button" class="updateuserbtn btn btn-success">编辑信息</button>
+			</div>
+			{% endif %}
+</div>
+{% block newcontainer%}
+<div class="tab">
+	<input type="radio" id="r-1" name="tab" checked>
+	<label for="r-1" class="tab-label" id="dynamictab">个人空间</label>
+	<div class="mod">
+	</div>
+	<input type="radio" id="r-2" name="tab">
+	<label for="r-2" class="tab-label" id="albumtab">用户相册</label>
+</div>
+<div class="modal fade" id="updateusermodel" tabindex="-1" role="dialog" aria-labelledby="myModalLabel"
+     aria-hidden="true">
+    <div id="updateusermodel-part" class="modal-dialog">
+    </div>
+</div>
+{% endblock %}
+{% endblock %}
+{% block scripts %}
+{{super()}}
+<script type="text/javascript" src="../static/js/user.js"></script>
+{% endblock %}

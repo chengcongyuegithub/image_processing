@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% block title %}相册详情{% endblock %}
+{% block styles %}
+<link href="{{ url_for('static',filename='css/albumdetail.css') }}" rel="stylesheet">
+{{super()}}
+{% endblock %}
+{% block container%}
+<input type="hidden" id="albumid" value="{{albumid}}">
+<div class="panel panel-default">
+    <div class="panel-heading">
+        <h3 class="panel-title">
+            <button type="button" class="btn btn-success uploaderbtn">上传图片</button>
+        </h3>
+    </div>
+    <div class="row">
+    {% for img in imglist%}
+    <div class="col-sm-6 col-md-2">
+        <div class="thumbnail">
+            <img src="{{img.url}}" class="img-responsive">
+            <input type="hidden" value="{{img.id}}"/>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+</div>
+<div class="modal fade" id="albumdetailmodel" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+    <div id="albumdetailmodel-part" class="modal-dialog">
+    </div>
+</div>
+<div class="modal fade" id="albumuploadmodel" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+    <div id="albumuploadmodel-part" class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal"
+                        aria-hidden="true">×
+                </button>
+                <h4 class="modal-title" id="myModalLabel">
+                    上传图片
+                </h4>
+            </div>
+            <div class="modal-body">
+                <input type="file" name="txt_file" id="albumupload" multiple class="file-loading" />
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+{% block scripts %}
+{{super()}}
+<script type="text/javascript" src="../static/js/jqthumb.js"></script>
+<script type="text/javascript" src="../static/js/albumdetail.js"></script>
+{% endblock %}

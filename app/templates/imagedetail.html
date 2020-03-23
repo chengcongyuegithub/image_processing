@@ -1,0 +1,28 @@
+<div class="modal-content">
+    <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal"
+                aria-hidden="true">×
+        </button>
+        <h4 class="modal-title" id="myModalLabel">
+            图片详情
+        </h4>
+    </div>
+    <div class="modal-body">
+        <div class="row">
+            <div class="col-md-6 col-md-offset-3">
+              <img src="{{img.url}}" class="img-responsive"/>
+            </div>
+        </div>
+    </div>
+    <div class="modal-footer">
+        <input type="hidden" id="imgid" value="{{img.id}}"/>
+        <button type="button" class="deletebtn btn btn-danger">删除</button>
+        <button type="button" class="superresolutionbtn btn btn-success">优化图片</button>
+        {% if img.action!='Origin'%}
+        <button type="button" class="comparebtn btn btn-primary">比较图片</button>
+        {% endif %}
+        <div id="myAlert" class="alert alert-danger hide">
+            <strong></strong>
+        </div>
+    </div>
+</div>

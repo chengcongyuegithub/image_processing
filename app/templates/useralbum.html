@@ -1,0 +1,63 @@
+{% extends "user.html" %}
+{% block title %}用户相册{% endblock %}
+{% block styles %}
+{{super()}}
+<link href="{{ url_for('static',filename='css/album.css') }}" rel="stylesheet">
+{% endblock %}
+{% block newcontainer%}
+<div class="tab">
+    <input type="radio" id="r-1" name="tab">
+    <label for="r-1" class="tab-label" id="dynamictab">个人空间</label>
+    <input type="radio" id="r-2" name="tab" checked>
+    <label for="r-2" class="tab-label" id="albumtab">用户相册</label>
+    <div class="mod">
+        <button type="button" class="btn btn-success addalbumbtn">新建相册</button>
+         <div class="row">
+            {% for album in albumlist%}
+            <div class="col-sm-6 col-md-3">
+                <div class="thumbnail">
+                    <img src="{{album['front_cover']}}" class="img-responsive">
+                    <div class="caption">
+                        <input type="hidden" class="album" value="{{album['id']}}"/>
+                        <h3>{{album['name']}}</h3>
+                        <p>{{album['introduce']}}
+                            {% if album['lookmore']%}&nbsp;&nbsp;<a class="look updatebtn">查看详情</a>{% endif %}
+                        </p>
+                        <p>
+                            <a class="btn btn-primary btn-success openbtn" role="button">
+                                打开
+                            </a>
+                            {% if album['id']!=1 %}
+                            <a class="btn btn-default btn-success updatebtn" role="button">
+                                编辑
+                            </a>
+                            {% endif %}
+                        </p>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+<div class="modal fade" id="albumupdatemodel" tabindex="-1" role="dialog" aria-labelledby="myModalLabel"
+     aria-hidden="true">
+    <div id="albumupdatemodel-part" class="modal-dialog">
+    </div>
+</div>
+<div class="modal fade" id="albumaddmodel" tabindex="-1" role="dialog" aria-labelledby="myModalLabel"
+     aria-hidden="true">
+    <div id="albumaddmodel-part" class="modal-dialog">
+    </div>
+</div>
+<div class="modal fade" id="updateusermodel" tabindex="-1" role="dialog" aria-labelledby="myModalLabel"
+     aria-hidden="true">
+    <div id="updateusermodel-part" class="modal-dialog">
+    </div>
+</div>
+{% endblock %}
+{% block scripts %}
+{{super()}}
+<script type="text/javascript" src="../static/js/jqthumb.js"></script>
+<script type="text/javascript" src="../static/js/useralbum.js"></script>
+{% endblock %}

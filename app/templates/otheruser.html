@@ -1,0 +1,16 @@
+{% extends "user.html" %}
+{% block title %}个人空间{% endblock %}
+{% block styles %}
+<link href="{{ url_for('static',filename='css/user.css') }}" rel="stylesheet">
+{{super()}}
+{% endblock %}
+{% block newcontainer%}
+<div class="modal fade" id="sendmsgmodel" tabindex="-1" role="dialog" aria-labelledby="myModalLabel"
+     aria-hidden="true">
+    <div id="sendmsgmodel-part" class="modal-dialog">
+    </div>
+</div>
+{% endblock %}
+{% block scripts %}
+{{super()}}
+{% endblock %}
