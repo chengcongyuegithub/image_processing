@@ -91,7 +91,8 @@ $(document).ready(function () {
                         $('.upscalingbtn button').attr('disabled','disabled');
     	            },
                     success: function (res) {
-
+                         $('.alert-danger').removeClass('hide').addClass('in');
+                         $('.alert-danger strong').text(res['message']);
                     }
                   });
              });
@@ -113,7 +114,7 @@ $(document).ready(function () {
                     success: function (res) {
                         if(flag){
                             $('.col-md-6').removeClass('col-md-offset-3');
-                            var newdiv='<div class="col-md-6"><img src="'+res['orginurl']+'" class="img-responsive"/></div>';
+                            var newdiv='<div class="col-md-6"><img src="'+res['url']+'" class="img-responsive"/></div>';
                             $('.col-md-6').parent().append(newdiv);
                             flag=false;
                         }
@@ -121,6 +122,9 @@ $(document).ready(function () {
                   });
              });
         });
+    });
+    $('#albumdetailmodel').on('shown.bs.modal', function (){
+
     });
     $('.row img').jqthumb({
             width: '100%',//宽度

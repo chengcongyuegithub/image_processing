@@ -78,11 +78,11 @@ def upscaling():
     imgid = data['imgid']
     albumid = data['albumid']
     time = data['time']
-    upscalingimg = Image.query.filter_by(action='Upscale_' + time, id=imgid).first()
+    upscalingimg = Image.query.filter_by(id=imgid).first()
     # 对于已经处理过的情况的处理
-    if upscalingimg != None:
-        return jsonify(code=400, message='此图片为优化过的图片，请选择其他功能')
-    upscalingimg = Image.query.filter_by(action='Upscale_' + time, id=imgid).first()
+    if upscalingimg.action != 'Origin':
+        return jsonify(code=400, message='此图片为处理过的图片，请选择其他功能')
+    upscalingimg = Image.query.filter_by(action='Upscale_' + time, orig_id=imgid).first()
     if upscalingimg != None:
         return jsonify(code=401, message='此图片已经优化过,请在该相册中查找')
     img = Image.query.filter_by(id=imgid).first()
@@ -94,17 +94,19 @@ def upscaling():
         return jsonify(code=402, message='该图片尺寸较大，将无法执行放大操作，请选择其他操作')
     # 丢给线程池
     fireEvent(EventModel(EventType.TASK, current_user.id, EntityType.IMAGE, imgid, current_user.id,
-                         {'task': 'srcnn_process','action':'Upscale_' + time,'suffix': suffix, 'albumid': albumid,'time':time}))
+                         {'task': 'srcnn_process', 'action': 'Upscale_' + time, 'suffix': suffix, 'albumid': albumid,
+                          'time': time}))
     return jsonify(code=200, message='得到的图片较大，稍后以私信的信息通知你')
+
 
 @image.route('/superresolution', methods=['GET', 'POST'])
 def superresolution():
     data = json.loads(request.get_data(as_text=True))
     imgid = data['imgid']
     albumid = data['albumid']
-    srcnnimg = Image.query.filter_by(action='SRCNN', id=imgid).first()
-    if srcnnimg != None:
-        return jsonify(code=400, message='此图片为优化过的图片，请选择其他功能');
+    srcnnimg = Image.query.filter_by(id=imgid).first()
+    if srcnnimg.action != 'Origin':
+        return jsonify(code=400, message='此图片为处理过的图片，请选择其他功能')
     srcnnimg = Image.query.filter_by(action='SRCNN', orig_id=imgid).first()
     if srcnnimg != None:
         return jsonify(code=401, message='此图片已经优化过,请在该相册中查找');
@@ -115,7 +117,8 @@ def superresolution():
     print(img.shape)
     if img.shape[0] > 900 or img.shape[1] > 900:  # 大型任务，交给线程池处理
         fireEvent(EventModel(EventType.TASK, current_user.id, EntityType.IMAGE, imgid, current_user.id,
-                             {'task': 'srcnn_process','action':'superresolution','suffix': suffix, 'albumid': albumid}))
+                             {'task': 'srcnn_process', 'action': 'SRCNN', 'suffix': suffix,
+                              'albumid': albumid}))
         return jsonify(code=201, message='图片较大，稍后以私信的信息通知你')
     else:  # 小图片直接处理
         with tf.Session() as sess:
@@ -148,5 +151,26 @@ def compare():
     if flag == False:
         return jsonify(code=400)
     img = Image.query.filter_by(id=imgid).first()
-    orginimg = Image.query.filter_by(id=img.orig_id).first()
-    return jsonify(code=200, orginurl=orginimg.url)
+    orginimg = Image.query.filter_by(id=img.orig_id).first()  # 原图
+    if img.action == 'SRCNN':
+        return jsonify(code=200, message='和原图进行比较', url=orginimg.url)
+    else:
+        times = img.action[8:9]  # Upscale_2x
+        print(times)
+        imgContent = fdfs_client.downloadbyBuffer(orginimg.url[len(fdfs_addr):])
+        orgimg = cv.imdecode(np.frombuffer(imgContent, np.uint8), cv.IMREAD_COLOR)
+        with tf.Session() as sess:
+            srcnn = SRCNN(sess, "../srcnn/checkpoint")
+            img = srcnn.upscaling(orgimg, int(times), False)
+        img = Img.fromarray(img)
+        f = BytesIO()
+        img.save(f, format='PNG')
+        f = f.getvalue()
+        suffix = orginimg.name[orginimg.name.find('.') + 1:]
+        url = fdfs_addr + fdfs_client.uploadbyBuffer(f, suffix)
+        imgname = url[url.rfind('/') + 1:]
+        newpic = Image(imgname, url, 'bicubicUpscale_' + times + 'x', orginimg.id, current_user.id, -1)
+        db.session.add(newpic)
+        db.session.flush()
+        db.session.commit()
+        return jsonify(code=201, message='和传统放大方法进行比较', url=newpic.url)

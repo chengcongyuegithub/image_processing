@@ -2,8 +2,7 @@ from .model import EventType
 from app.models import Message
 from app import db,largetaskexecutor
 from .largetask import deleteinbatch,srcnn_process
-taskflag=True
-taskstr='???????'
+
 
 class EventHandler():
     def dohandler(self, eventModel):
@@ -98,17 +97,19 @@ class TaskEventHandler(EventHandler):
                 db.session.add(message)
                 db.session.commit()
         elif eventModel.dict['task'] == 'srcnn_process':
-            if eventModel.dict['action']=='superresolution':# 清晰化处理
+            if eventModel.dict['action']=='SRCNN':# 清晰化处理
                 print('清晰化处理')
                 task = largetaskexecutor.submit(srcnn_process,eventModel.entityId,eventModel.dict['albumid'],eventModel.entityOwnerId,eventModel.dict['action'])
             else:# 放大处理
                 print('放大处理')
                 task = largetaskexecutor.submit(srcnn_process,eventModel.entityId,eventModel.dict['albumid'],eventModel.entityOwnerId,eventModel.dict['action'],eventModel.dict['time'])
+            '''
             if task.result():
                 message = Message(-1, eventModel.entityOwnerId,
-                                  '图片优化已经完成，请访问图片所在的相册')
+                                  '图片放大已经完成，请访问图片所在的相册')
                 db.session.add(message)
                 db.session.commit()
+           '''
 
     def getSupportEventTypes(self):
         return [EventType.TASK]

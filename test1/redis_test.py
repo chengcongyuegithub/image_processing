@@ -31,6 +31,6 @@ print(conn.zcard('album1:2'))
 #print(conn.smembers('useralbum:2'))
 
 #conn.zrem('album:1:1','8')
-for e in conn.zrange('album:1:1',0,sys.maxsize,desc=True,withscores=False,score_cast_func=float):
+for e in conn.zrange('album:4:1',0,sys.maxsize,desc=True,withscores=False,score_cast_func=float):
     print(e)
-    conn.zrem('album:1:1', e)
+    conn.zrem('album:4:1',e)

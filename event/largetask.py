@@ -1,4 +1,4 @@
-from app import conn,db,fdfs_addr,fdfs_client,tf,cv
+from app import conn,db,fdfs_addr,fdfs_client,tf,cv,largetaskexecutor
 import numpy as np
 from app.models import Image
 from flask_login import current_user
@@ -21,14 +21,18 @@ def deleteinbatch(userid,albumid):
     return True
 # 大型任务2：SRCNN处理大型图片，设置为长宽有超过900的；放大处理图片
 def srcnn_process(imgid,albumid,userid,action,times=1):
+    print(imgid)
+    db.session.commit()
     img = Image.query.filter_by(id=imgid).first()
+    if img==None:
+        return False
     suffix = img.name[img.name.find('.') + 1:]
     imgContent = fdfs_client.downloadbyBuffer(img.url[len(fdfs_addr):])
     img = cv.imdecode(np.frombuffer(imgContent, np.uint8), cv.IMREAD_COLOR)
     g1 = tf.Graph()
     with tf.Session(graph=g1) as sess:
         srcnn = SRCNN(sess, "../srcnn/checkpoint")
-        if action == 'superresolution':
+        if action == 'SRCNN':
             print('清晰化处理')
             img = srcnn.superresolution(img)
         else:
