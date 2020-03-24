@@ -1,6 +1,6 @@
 from . import image
 from flask import *
-from app import fdfs_client, fdfs_addr, db, conn,cv,tf
+from app import fdfs_client, fdfs_addr, db, conn, cv, tf
 from app.models import Image
 from flask_login import current_user
 import time
@@ -9,7 +9,8 @@ from PIL import Image as Img
 from srcnn.model import SRCNN
 from io import BytesIO
 from event.event_queue import fireEvent
-from event.model import EntityType,EventModel,EventType
+from event.model import EntityType, EventModel, EventType
+
 
 @image.route("/uploader", methods={'get', 'post'})
 def index():
@@ -71,6 +72,31 @@ def delete():
     return jsonify(code=200)
 
 
+@image.route('/upscaling', methods=['GET', 'POST'])
+def upscaling():
+    data = json.loads(request.get_data(as_text=True))
+    imgid = data['imgid']
+    albumid = data['albumid']
+    time = data['time']
+    upscalingimg = Image.query.filter_by(action='Upscale_' + time, id=imgid).first()
+    # 对于已经处理过的情况的处理
+    if upscalingimg != None:
+        return jsonify(code=400, message='此图片为优化过的图片，请选择其他功能')
+    upscalingimg = Image.query.filter_by(action='Upscale_' + time, id=imgid).first()
+    if upscalingimg != None:
+        return jsonify(code=401, message='此图片已经优化过,请在该相册中查找')
+    img = Image.query.filter_by(id=imgid).first()
+    suffix = img.name[img.name.find('.') + 1:]
+    imgContent = fdfs_client.downloadbyBuffer(img.url[len(fdfs_addr):])
+    img = cv.imdecode(np.frombuffer(imgContent, np.uint8), cv.IMREAD_COLOR)
+    print(img.shape)
+    if img.shape[0] > 900 or img.shape[1] > 900:
+        return jsonify(code=402, message='该图片尺寸较大，将无法执行放大操作，请选择其他操作')
+    # 丢给线程池
+    fireEvent(EventModel(EventType.TASK, current_user.id, EntityType.IMAGE, imgid, current_user.id,
+                         {'task': 'srcnn_process','action':'Upscale_' + time,'suffix': suffix, 'albumid': albumid,'time':time}))
+    return jsonify(code=200, message='得到的图片较大，稍后以私信的信息通知你')
+
 @image.route('/superresolution', methods=['GET', 'POST'])
 def superresolution():
     data = json.loads(request.get_data(as_text=True))
@@ -87,11 +113,11 @@ def superresolution():
     imgContent = fdfs_client.downloadbyBuffer(img.url[len(fdfs_addr):])
     img = cv.imdecode(np.frombuffer(imgContent, np.uint8), cv.IMREAD_COLOR)
     print(img.shape)
-    if img.shape[0]>900 or img.shape[1]>900:# 大型任务，交给线程池处理
+    if img.shape[0] > 900 or img.shape[1] > 900:  # 大型任务，交给线程池处理
         fireEvent(EventModel(EventType.TASK, current_user.id, EntityType.IMAGE, imgid, current_user.id,
-                             {'task':'srcnn_process','suffix': suffix,'albumid':albumid}))
-        return jsonify(code=201,message='图片较大，稍后以私信的信息通知你')
-    else: # 小图片直接处理
+                             {'task': 'srcnn_process','action':'superresolution','suffix': suffix, 'albumid': albumid}))
+        return jsonify(code=201, message='图片较大，稍后以私信的信息通知你')
+    else:  # 小图片直接处理
         with tf.Session() as sess:
             srcnn = SRCNN(sess, "../srcnn/checkpoint")
             img = srcnn.superresolution(img)

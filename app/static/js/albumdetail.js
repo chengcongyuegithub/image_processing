@@ -71,6 +71,30 @@ $(document).ready(function () {
                     }
                   });
              });
+             $('.upscalingbtn li').click(function (){
+                  var imgid=$(this).parent().parent().parent().children('input[type=hidden]').val();
+                  var time=$(this).text();
+                  $.ajax({
+                    url: '/image/upscaling',
+                    type: 'post',
+                    dataType: 'json',
+                    data: JSON.stringify({
+                        imgid:imgid,
+                        albumid:albumid,
+                        time:time
+                    }),
+                    headers: {
+                        "Content-Type": "application/json;charset=utf-8"
+                    },
+                    contentType: 'application/json; charset=utf-8',
+                    beforeSend: function(){
+                        $('.upscalingbtn button').attr('disabled','disabled');
+    	            },
+                    success: function (res) {
+
+                    }
+                  });
+             });
              var flag=true;
              $('.comparebtn').click(function (){
                   var imgid=$(this).parent().children('input[type=hidden]').val();

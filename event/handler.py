@@ -98,7 +98,12 @@ class TaskEventHandler(EventHandler):
                 db.session.add(message)
                 db.session.commit()
         elif eventModel.dict['task'] == 'srcnn_process':
-            task = largetaskexecutor.submit(srcnn_process,eventModel.entityId,eventModel.dict['albumid'],eventModel.entityOwnerId)
+            if eventModel.dict['action']=='superresolution':# 清晰化处理
+                print('清晰化处理')
+                task = largetaskexecutor.submit(srcnn_process,eventModel.entityId,eventModel.dict['albumid'],eventModel.entityOwnerId,eventModel.dict['action'])
+            else:# 放大处理
+                print('放大处理')
+                task = largetaskexecutor.submit(srcnn_process,eventModel.entityId,eventModel.dict['albumid'],eventModel.entityOwnerId,eventModel.dict['action'],eventModel.dict['time'])
             if task.result():
                 message = Message(-1, eventModel.entityOwnerId,
                                   '图片优化已经完成，请访问图片所在的相册')

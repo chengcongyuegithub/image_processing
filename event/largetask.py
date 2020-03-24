@@ -19,8 +19,8 @@ def deleteinbatch(userid,albumid):
         # 删除redis
         conn.zrem(rediskey, imgid)
     return True
-# 大型任务2：SRCNN处理大型图片，设置为长宽有超过900的
-def srcnn_process(imgid,albumid,userid):
+# 大型任务2：SRCNN处理大型图片，设置为长宽有超过900的；放大处理图片
+def srcnn_process(imgid,albumid,userid,action,times=1):
     img = Image.query.filter_by(id=imgid).first()
     suffix = img.name[img.name.find('.') + 1:]
     imgContent = fdfs_client.downloadbyBuffer(img.url[len(fdfs_addr):])
@@ -28,7 +28,12 @@ def srcnn_process(imgid,albumid,userid):
     g1 = tf.Graph()
     with tf.Session(graph=g1) as sess:
         srcnn = SRCNN(sess, "../srcnn/checkpoint")
-        img = srcnn.superresolution(img)
+        if action == 'superresolution':
+            print('清晰化处理')
+            img = srcnn.superresolution(img)
+        else:
+            print('放大处理')
+            img = srcnn.upscaling(img, int(times[0:1]), True)
     img = Img.fromarray(img)
     f = BytesIO()
     img.save(f, format='PNG')
@@ -36,7 +41,7 @@ def srcnn_process(imgid,albumid,userid):
     # 保存并上传数据库
     url = fdfs_addr + fdfs_client.uploadbyBuffer(f, suffix)
     imgname = url[url.rfind('/') + 1:]
-    newimg = Image(imgname, url, 'SRCNN',imgid,userid,-1)
+    newimg = Image(imgname, url, action,imgid,userid,-1)
     db.session.add(newimg)
     db.session.flush()
     db.session.commit()

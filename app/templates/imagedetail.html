@@ -18,6 +18,15 @@
         <input type="hidden" id="imgid" value="{{img.id}}"/>
         <button type="button" class="deletebtn btn btn-danger">删除</button>
         <button type="button" class="superresolutionbtn btn btn-success">优化图片</button>
+        <div class="btn-group upscalingbtn">
+            <button type="button" class="btn btn-warning dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                 图片放大<span class="caret"></span>
+            </button>
+            <ul class="dropdown-menu">
+            <li><a href="#">2x</a></li>
+            <li><a href="#">3x</a></li>
+            </ul>
+         </div>
         {% if img.action!='Origin'%}
         <button type="button" class="comparebtn btn btn-primary">比较图片</button>
         {% endif %}
