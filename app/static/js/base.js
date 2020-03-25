@@ -33,8 +33,9 @@ $(document).ready(function(){
 
     $('#basesuperresolutionmodel').on('shown.bs.modal', function() {
          $('#basesuperresolutionmodel-part').load('/image/superresolution',function(){
+             var albumid;
              $('#basedropdown li').click(function () {
-                     var albumid=$(this).children().attr('id');
+                     albumid=$(this).children().attr('id');
                      $.ajax({
                         type: "POST",
                         url: "/album/ajaxdetail",
@@ -43,7 +44,7 @@ $(document).ready(function(){
                         }),
                         success: function (msg) {
                             $('.baseimg').empty();
-                            var newidv='<div class="row baseimg">';
+                            var newidv='';
                             for (i = 0; i < msg['imglist'].length; i++) {
                                newidv+='<div class="col-sm-6 col-md-2"><a href="#" class="thumbnail">' +
                                    '<img id="'+msg['imglist'][i].id+'"src="'+msg['imglist'][i].url+'" class="img-responsive"/></a></div>';
@@ -53,8 +54,40 @@ $(document).ready(function(){
                         }
                      });
                  });
-
-
+             var baseimgid;
+             $(".baseimg").on('click', '.thumbnail', function () {
+                  baseimgid=$(this).children('img').attr('id');
+             });
+             $('.basesuperbtn').click(function () {
+                   if(typeof(baseimgid) == "undefined")
+                   {
+                        $('#baseAlert').removeClass('hide').addClass('in');
+                        $('#baseAlert strong').text('请选择处理的图片');
+                        return ;
+                   }
+                    $.ajax({
+                        url: '/image/superresolution',
+                        type: 'post',
+                        dataType: 'json',
+                        data: JSON.stringify({
+                            imgid:baseimgid,
+                            albumid:albumid,
+                            flag:true
+                        }),
+                        headers: {
+                            "Content-Type": "application/json;charset=utf-8"
+                        },
+                        contentType: 'application/json; charset=utf-8',
+                        beforeSend: function(){
+                            $('.basesuperbtn').attr('disabled','disabled');
+                        },
+                        success: function (res) {
+                            $('.basesuperbtn').removeAttr("disabled");
+                            $('#baseAlert').removeClass('hide').addClass('in');
+                            $('#baseAlert strong').text(res['message']);
+                        }
+                   });
+             });
          });
      });
     $('#baseuploadermodel').on('shown.bs.modal', function() {

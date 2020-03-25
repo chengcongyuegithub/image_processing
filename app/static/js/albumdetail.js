@@ -44,7 +44,8 @@ $(document).ready(function () {
                     dataType: 'json',
                     data: JSON.stringify({
                         imgid:imgid,
-                        albumid:albumid
+                        albumid:albumid,
+                        flag:false
                     }),
                     headers: {
                         "Content-Type": "application/json;charset=utf-8"

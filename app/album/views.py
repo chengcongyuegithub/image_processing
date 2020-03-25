@@ -34,6 +34,8 @@ def ajaxdetail():
         imgid = int(imgid)
         img = Image.query.filter_by(id=imgid).first()
         if img.action=='Origin':
+            proimg = Image.query.filter_by(orig_id=imgid).first()
+            if proimg!=None: continue;
             dict['url']=img.url
             dict['id']=img.id
             imglist.append(dict)

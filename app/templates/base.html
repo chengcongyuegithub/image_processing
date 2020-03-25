@@ -20,7 +20,7 @@
                 {% if current_user.is_authenticated %}
                 <li class="dropdown">
                 <a id="username" href="#" class="dropdown-toggle" data-toggle="dropdown">
-                    <span><img src="{{current_user.head_url}}" width="20px",height="20px"></span>&nbsp;{{current_user.username}}<b class="caret"></b>
+                    &nbsp{{current_user.username}}<b class="caret"></b>
                 </a>
                 <ul class="dropdown-menu">
                     <li><a href="/user/myspace"><span class="glyphicon glyphicon-user"></span>个人空间</a></li>
