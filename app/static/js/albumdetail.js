@@ -123,8 +123,22 @@ $(document).ready(function () {
              });
         });
     });
-    $('#albumdetailmodel').on('shown.bs.modal', function (){
+    $('#albumdetailmodel').on('hidden.bs.modal', function (){
+        $.ajax({
+                url: '/image/closecompare',
+                type: 'post',
+                dataType: 'json',
+                data: JSON.stringify({
+                    imgid:imgid
+                }),
+                headers: {
+                    "Content-Type": "application/json;charset=utf-8"
+                },
+                contentType: 'application/json; charset=utf-8',
+                success: function (res) {
 
+                }
+              });
     });
     $('.row img').jqthumb({
             width: '100%',//宽度

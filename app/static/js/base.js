@@ -1,12 +1,19 @@
 $(document).ready(function(){
-    $('#uploadbtn').click(function () {
+    $('.basebtn').click(function () {
+        var id=$(this).attr('id');
         $.ajax({
             type: "POST",
             url: "/user/islogin",
             data: [],
             success: function (msg) {
                 if(msg=='True'){
-                    $('#model').modal('show')
+                    if (id=='uploadbtn')
+                    {
+                        $('#baseuploadermodel').modal('show');
+                    }else
+                    {
+                        $('#basesuperresolutionmodel').modal('show');
+                    }
                 }else
                 {
                     var curhref=window.location.pathname;
@@ -23,8 +30,35 @@ $(document).ready(function(){
         });
     });
 
-    $('#model').on('shown.bs.modal', function() {
-          $('#model-part').load('/image/uploader',function(){
+
+    $('#basesuperresolutionmodel').on('shown.bs.modal', function() {
+         $('#basesuperresolutionmodel-part').load('/image/superresolution',function(){
+             $('#basedropdown li').click(function () {
+                     var albumid=$(this).children().attr('id');
+                     $.ajax({
+                        type: "POST",
+                        url: "/album/ajaxdetail",
+                        data: JSON.stringify({
+                            albumid:albumid
+                        }),
+                        success: function (msg) {
+                            $('.baseimg').empty();
+                            var newidv='<div class="row baseimg">';
+                            for (i = 0; i < msg['imglist'].length; i++) {
+                               newidv+='<div class="col-sm-6 col-md-2"><a href="#" class="thumbnail">' +
+                                   '<img id="'+msg['imglist'][i].id+'"src="'+msg['imglist'][i].url+'" class="img-responsive"/></a></div>';
+                            }
+                            newidv+='</div>';
+                            $('.baseimg').append(newidv);
+                        }
+                     });
+                 });
+
+
+         });
+     });
+    $('#baseuploadermodel').on('shown.bs.modal', function() {
+          $('#baseuploadermodel-part').load('/image/uploader',function(){
                 $('#txt_file').fileinput({
                     language: 'zh', //设置语言
                     uploadUrl: '/image/uploader', //上传的地址

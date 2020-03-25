@@ -13,8 +13,8 @@
             <ul class="nav navbar-nav">
                 <li><a href="/">首页</a></li>
                 <li><a href="">发布动态</a></li>
-                <li><a href="#" id="uploadbtn">图像上传</a></li>
-                <li><a href="">图像优化</a></li>
+                <li><a href="#"  class='basebtn' id="uploadbtn">图像上传</a></li>
+                <li><a href="#"  class='basebtn' id="superresolutionbtn">图像优化</a></li>
             </ul>
             <ul class="nav navbar-nav navbar-right">
                 {% if current_user.is_authenticated %}
@@ -46,8 +46,13 @@
 <div class="container">
    {% block container%}{% endblock %}
     <!--图片上传的模块-->
-    <div class="modal fade" id="model" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
-        <div id="model-part" class="modal-dialog">
+    <div class="modal fade" id="baseuploadermodel" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+        <div id="baseuploadermodel-part" class="modal-dialog">
+        </div>
+    </div>
+    <!--图片优化的模块-->
+    <div class="modal fade" id="basesuperresolutionmodel" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+        <div id="basesuperresolutionmodel-part" class="modal-dialog">
         </div>
     </div>
 </div>
@@ -55,7 +60,7 @@
 {% endblock %}
 {% block scripts %}
 {{super()}}
-<script type="text/javascript" src="../static/js/upload.js"></script>
+<script type="text/javascript" src="../static/js/base.js"></script>
 <script type="text/javascript" src="../static/js/fileinput.min.js"></script>
 <script type="text/javascript" src="../static/js/zh.js"></script>
 {% endblock %}

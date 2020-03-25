@@ -103,13 +103,12 @@ class TaskEventHandler(EventHandler):
             else:# 放大处理
                 print('放大处理')
                 task = largetaskexecutor.submit(srcnn_process,eventModel.entityId,eventModel.dict['albumid'],eventModel.entityOwnerId,eventModel.dict['action'],eventModel.dict['time'])
-            '''
             if task.result():
                 message = Message(-1, eventModel.entityOwnerId,
                                   '图片放大已经完成，请访问图片所在的相册')
                 db.session.add(message)
                 db.session.commit()
-           '''
+
 
     def getSupportEventTypes(self):
         return [EventType.TASK]

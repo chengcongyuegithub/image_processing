@@ -21,6 +21,26 @@ def index(albumid):
     return render_template('albumdetail.html', imglist=imglist, albumid=albumid)
 
 
+@album.route("/ajaxdetail", methods={'get', 'post'})
+@login_required
+def ajaxdetail():
+    data = json.loads(request.get_data(as_text=True))
+    albumid = data['albumid']
+    rediskey = 'album:' + str(current_user.id) + ':' + albumid
+    imglist = []
+    for imgid in conn.zrange(rediskey, 0,sys.maxsize, desc=True, withscores=False, score_cast_func=float):
+        dict={}
+        imgid = str(imgid, encoding="utf-8")
+        imgid = int(imgid)
+        img = Image.query.filter_by(id=imgid).first()
+        if img.action=='Origin':
+            dict['url']=img.url
+            dict['id']=img.id
+            imglist.append(dict)
+        if len(imglist)==6: break
+    return jsonify(code=200, imglist=imglist, albumid=albumid)
+
+
 @album.route("/updatealbum", methods={'get', 'post'})
 @login_required
 def update():
@@ -34,7 +54,7 @@ def update():
 def updatealb():
     if request.method == 'POST':
         albumid = request.values.get('albumid').strip()
-        if int(albumid)==1:
+        if int(albumid) == 1:
             return redirect('/user/useralbum')
         name = request.values.get('name').strip()
         introduce = request.values.get('introduce').strip()
@@ -101,5 +121,5 @@ def delete():
     conn.srem(rediskey, albumid)
     # 删除内容----异步
     fireEvent(EventModel(EventType.TASK, current_user.id, EntityType.ALBUM, albumid, current_user.id,
-                         {'task':'deleteinbatch','orginlname': name, 'action': '删除'}))
+                         {'task': 'deleteinbatch', 'orginlname': name, 'action': '删除'}))
     return jsonify(code=200)
