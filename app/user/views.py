@@ -4,27 +4,108 @@ from flask import *
 from flask_login import login_user, logout_user, login_required, current_user
 from event.event_queue import fireEvent
 from event.model import EventType, EventModel, EntityType
-from app import db,conn,fdfs_addr,fdfs_client
+from app import db, conn, fdfs_addr, fdfs_client
 import hashlib
 import random
+import time
+import sys
 
 
 @user.route("/myspace")
 @login_required
 def index():
-    return render_template('user.html', user=current_user)
+    followercount, followeecount = followerandeecount(str(current_user.id))
+    return render_template('user.html', user=current_user, followercount=followercount, followeecount=followeecount)
+
+
+@user.route("/follower")
+@login_required
+def follower():  # 被多少人关注
+    list = followerlist(str(current_user.id))
+    return render_template('follower.html', followerlist=list)
+
+
+@user.route("/followee")
+@login_required
+def followee():  # 关注了多少人
+    list = followeelist(str(current_user.id))
+    return render_template('followee.html', followeelist=list)
+
+
+@user.route("/follow", methods={'get', 'post'})
+@login_required
+def follow():
+    data = json.loads(request.get_data(as_text=True))
+    userid = data['userid']
+    # 构造rediskey
+    followerkey = 'follower:1:' + userid  # 有哪些人关注了这个user
+    followeekey = 'followee:' + str(current_user.id) + ':1'  # 当前执行操作的人关注了那些人
+    conn.zadd(followerkey, {current_user.id: time.time()})
+    conn.zadd(followeekey, {userid: time.time()})
+    # 发送私信
+    fireEvent(EventModel(EventType.FOLLOW, current_user.id, EntityType.USER, userid, userid, {'name':current_user.nickname}))
+    return jsonify(code=200)
+
+
+@user.route("/unfollow", methods={'get', 'post'})
+@login_required
+def unfollow():
+    data = json.loads(request.get_data(as_text=True))
+    userid = data['userid']
+    # 构造rediskey
+    followerkey = 'follower:1:' + userid  # 有哪些人关注了这个user
+    followeekey = 'followee:' + str(current_user.id) + ':1'  # 当前执行操作的人关注了那些人
+    conn.zrem(followerkey, current_user.id)
+    conn.zrem(followeekey, userid)
+    return jsonify(code=200)
 
 
 @user.route("/<userid>")
 def otheruser(userid):
     msgflag = True
     # 没有私信的按钮
-    if isinstance(current_user.is_anonymous, bool) is False and str(current_user.id) == userid:
+    if isinstance(current_user.is_anonymous, bool) is False and str(current_user.id) == userid:  # 登录的情况
         return redirect('/user/myspace')
-    elif isinstance(current_user.is_anonymous, bool):
-        msgflag = False
+    elif isinstance(current_user.is_anonymous, bool):  # 匿名的情况
+        msgflag = False  # 匿名的情况
     user = User.query.filter_by(id=userid).first()
-    return render_template('otheruser.html', user=user, msgflag=msgflag, updateflag=True)
+    # 当前用户是否关注的查看的用户
+    isfollow = True
+    if msgflag:  # 如果不是匿名的情况
+        followeekey = 'followee:' + str(current_user.id) + ':1'
+        isfollow = conn.zrank(followeekey, userid)
+        if isinstance(isfollow, int):
+            isfollow = True
+        else:
+            isfollow = False
+    # 当前用户的关注
+    followercount, followeecount = followerandeecount(userid)
+    return render_template('otheruser.html', user=user, msgflag=msgflag, updateflag=True, followflag=isfollow,
+                           followercount=followercount, followeecount=followeecount)
+
+
+@user.route("/follower<userid>")
+def otherfollower(userid):
+    nameflag = False
+    if isinstance(current_user.is_anonymous, bool) is False and str(current_user.id) == userid:  # 当前用户并且登录的话直接跳转
+        return redirect('/user/follower')
+    elif isinstance(current_user.is_anonymous, bool):
+        nameflag = False
+    user = User.query.filter_by(id=userid).first()
+    list = followerlist(userid)
+    return render_template('follower.html', followerlist=list, nameflag=nameflag, username=user.nickname)
+
+
+@user.route("/followee<userid>")
+def otherfollowee(userid):
+    nameflag = True
+    if isinstance(current_user.is_anonymous, bool) is False and str(current_user.id) == userid:
+        return redirect('/user/followee')
+    elif isinstance(current_user.is_anonymous, bool):
+        nameflag = False
+    user = User.query.filter_by(id=userid).first()
+    list = followeelist(userid)
+    return render_template('followee.html', followeelist=list, nameflag=nameflag, username=user.nickname)
 
 
 @user.route("/updateuser", methods={'get', 'post'})
@@ -52,6 +133,7 @@ def upduser():
         db.session.commit()
     return redirect('/user/myspace')
 
+
 @user.route('/useralbum')
 @login_required
 def useralbum():
@@ -69,7 +151,9 @@ def useralbum():
         dict['front_cover'] = album.front_cover
         dict['lookmore'] = False if len(album.introduce) < 7 else True
         albumdictlist.append(dict)
-    return render_template('useralbum.html', albumlist=albumdictlist, user=current_user)
+    followercount, followeecount = followerandeecount(str(current_user.id))
+    return render_template('useralbum.html', albumlist=albumdictlist, user=current_user, followercount=followercount,
+                           followeecount=followeecount)
 
 
 @user.route('/regloginpage')
@@ -240,6 +324,47 @@ def isread():
     db.session.commit()
     print(current_user)
     return jsonify(code=200, message='信息已读')
+
+
+# 计算关注和被关注数量
+def followerandeecount(userid):
+    followerkey = 'follower:1:' + userid  # 有哪些人关注了这个user
+    followeekey = 'followee:' + userid + ':1'  # 当前执行操作的人关注了那些人
+    followeecount = conn.zcount(followeekey, 0, sys.maxsize)
+    followercount = conn.zcount(followerkey, 0, sys.maxsize)
+    return followercount, followeecount
+
+
+# 关注列表
+def followerlist(userid):
+    followerkey = 'follower:1:' + userid
+    followerdictlist = []
+    for userid in conn.zrange(followerkey, 0, sys.maxsize, desc=True, withscores=False, score_cast_func=float):
+        dict = {}
+        userid = str(userid, encoding="utf-8")
+        userid = int(userid)
+        user = User.query.filter_by(id=userid).first()
+        dict['id'] = userid
+        dict['name'] = user.nickname
+        dict['url'] = user.head_url
+        followerdictlist.append(dict)
+    return followerdictlist
+
+
+# 被关注列表
+def followeelist(userid):
+    followeekey = 'followee:' + userid + ':1'
+    followeelist = []
+    for userid in conn.zrange(followeekey, 0, sys.maxsize, desc=True, withscores=False, score_cast_func=float):
+        dict = {}
+        userid = str(userid, encoding="utf-8")
+        userid = int(userid)
+        user = User.query.filter_by(id=userid).first()
+        dict['id'] = userid
+        dict['name'] = user.nickname
+        dict['url'] = user.head_url
+        followeelist.append(dict)
+    return followeelist
 
 
 def redirect_with_msg(target, msg):

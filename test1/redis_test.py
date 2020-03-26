@@ -31,6 +31,11 @@ print(conn.zcard('album1:2'))
 #print(conn.smembers('useralbum:2'))
 
 #conn.zrem('album:1:1','8')
-for e in conn.zrange('album:1:2',0,sys.maxsize,desc=True,withscores=False,score_cast_func=float):
-    print(e)
-    conn.zrem('album:1:2',e)
+#for e in conn.zrange('followee:2:1',0,sys.maxsize,desc=True,withscores=False,score_cast_func=float):
+    #print(e)
+    #conn.zrem('album:1:2',e)
+
+#print(conn.zrank('followee:2:1','5'))
+
+count=conn.zcount('followee:3:1',0,sys.maxsize)
+print(count)

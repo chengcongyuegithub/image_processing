@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% block title %}被关注{% endblock %}
+{% block styles %}
+{{super()}}
+<link href="{{ url_for('static',filename='css/follow.css') }}" rel="stylesheet">
+{% endblock %}
+{% block container%}
+<div class="follow panel panel-default">
+    <div class="panel-heading">
+        <h3 class="panel-title">
+            {% if nameflag %}
+            <label>{{username}}的粉丝列表</label>
+            {% elif nameflag==False%}
+            <label>{{username}}的粉丝列表</label>
+            {% else%}
+            <label>我的粉丝列表</label>
+            {% endif%}
+        </h3>
+    </div>
+    <div class="panel-body">
+        <ul class="list-group">
+            {% for user in followerlist%}
+            <li class="list-group-item followli">
+                <a href="/user/{{user['id']}}"><img class="userimg img-circle" src="{{user['url']}}"></a>
+                <label class="followcontent">
+                    {{user['name']}}
+                </label>
+            </li>
+            {% endfor%}
+        </ul>
+    </div>
+</div>
+{% endblock %}
+{% block scripts %}
+{{super()}}
+<script type="text/javascript" src="../static/js/follow.js"></script>
+{% endblock %}

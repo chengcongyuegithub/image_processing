@@ -1,0 +1,23 @@
+.follow {
+    width: 700px;
+    margin: 0px 0px 0px 250px;
+    list-style: none;
+}
+
+.follow .followli {
+    width: 100%;
+    height: 50px;
+    position: relative;
+    margin: 0px 0px 10px 0px;
+}
+.userimg {
+    height: 35px;
+    width: 35px;
+    float: left;
+}
+.followcontent {
+    width: 450px;
+	height: 45px;
+    margin: 0px 0px 0px 30px;
+    float: left;
+}

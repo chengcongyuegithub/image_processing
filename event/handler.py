@@ -17,7 +17,9 @@ class FollowEventHandler(EventHandler):
         print('FollowEventHandler被创建了')
 
     def dohandler(self, eventModel):
-        print('关注事件发生的时候')
+        message = Message(eventModel.actorId,eventModel.entityId, '名为 '+eventModel.dict['name']+' 的用户关注了你')
+        db.session.add(message)
+        db.session.commit()
 
     def getSupportEventTypes(self):
         return [EventType.FOLLOW, EventType.UNFOLLOW]

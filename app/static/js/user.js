@@ -35,7 +35,7 @@ $(document).ready(function(){
             });
          });
      });
-  $('.sendmsgbtn').click(function(){
+  $('.opensendmsgbtn').click(function(){
          $('#sendmsgmodel').modal('show');
   });
    $('#sendmsgmodel').on('shown.bs.modal', function () {
@@ -63,5 +63,45 @@ $(document).ready(function(){
                       });
                 });
         });
+     });
+     $('.followuserdiv').on('click','.followuserbtn',function (){
+         var userid=$(this).parent().parent().children('input[type=hidden]').val();
+         $.ajax({
+                    url: '/user/follow',
+                    type: 'post',
+                    dataType: 'json',
+                    data: JSON.stringify({
+                        userid:userid
+                    }),
+                    headers: {
+                        "Content-Type": "application/json;charset=utf-8"
+                    },
+                    contentType: 'application/json; charset=utf-8',
+                    success: function (res) {
+                         $('.followuserdiv button').removeClass('followuserbtn').addClass('unfollowuserbtn');
+                         $('.followuserdiv button').removeClass('btn-warning').addClass('btn-info');
+                         $('.followuserdiv button').text('已关注');
+                    }
+           });
+     });
+     $('.followuserdiv').on('click','.unfollowuserbtn',function(){
+         var userid=$(this).parent().parent().children('input[type=hidden]').val();
+         $.ajax({
+                    url: '/user/unfollow',
+                    type: 'post',
+                    dataType: 'json',
+                    data: JSON.stringify({
+                        userid:userid
+                    }),
+                    headers: {
+                        "Content-Type": "application/json;charset=utf-8"
+                    },
+                    contentType: 'application/json; charset=utf-8',
+                    success: function (res) {
+                        $('.followuserdiv button').removeClass('unfollowuserbtn').addClass('followuserbtn');
+                        $('.followuserdiv button').removeClass('btn-info').addClass('btn-warning');
+                        $('.followuserdiv button').text('关注');
+                    }
+           });
     });
 });

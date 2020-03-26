@@ -20,26 +20,31 @@
 				</div>
 				<div class="numdivs">
 					<label class="numname text-success">关注</label>
-					<a class="num">5</a>
+					<a href='/user/followee{{user.id}}'class="num">{{followeecount}}</a>
 				</div>
 				<div class="numdivs">
 					<label class="numname text-success">被关注</label>
-					<a class="num">8</a>
+					<a href='/user/follower{{user.id}}' class="num">{{followercount}}</a>
 				</div>
 			</div>
 
 			{% if msgflag %}
 			<div class="sendmsgdiv">
-				<button type="button" class="sendmsgbtn btn btn-danger">私信</button>
+				<button type="button" class="opensendmsgbtn btn btn-danger">私信</button>
 			</div>
 			<div class="followuserdiv">
+				{% if followflag %}
+				<button type="button" class="unfollowuserbtn btn btn-info">已关注</button>
+				{% else%}
 				<button type="button" class="followuserbtn btn btn-warning">关注</button>
+				{% endif %}
 			</div>
-			{% else %}
+			{% elif msgflag==False %}<!--匿名的情况，是当前用户的情况-->
+			{% else%}
 			<div class="editselfdiv">
 				<button type="button" class="updateuserbtn btn btn-success">编辑信息</button>
 			</div>
-			{% endif %}
+	        {% endif %}
 </div>
 {% block newcontainer%}
 <div class="tab">
