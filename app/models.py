@@ -9,7 +9,7 @@ class Dynamic(db.Model):
     content = db.Column(db.Text)
     changetime = db.Column(db.String(20))
 
-    def __init__(self, content, tag_id):
+    def __init__(self, content):
         self.content = content
         self.changetime = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
 
@@ -114,16 +114,15 @@ class Comment(db.Model):
     __tablename__ = 'comment'
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     content = db.Column(db.Text)
+    entityOwnerId = db.Column(db.Integer)
     # 处理对象的类型
-    # 用户1
-    # 动态2
-    # 评论3
     entityType = db.Column(db.Integer)
     entityId = db.Column(db.Integer)
     changetime = db.Column(db.String(20))
 
-    def __init__(self, content, entityType, entityId):
+    def __init__(self, content, entityOwnerId, entityType, entityId):
         self.content = content
+        self.entityOwnerId = entityOwnerId
         self.entityType = entityType
         self.entityId = entityId
         self.changetime = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
@@ -150,13 +149,15 @@ class Message(db.Model):
     # fromid为10，toid为2
     # conversationId 2to10
     conversationId = db.Column(db.String(20))
+    #action的类型，是谈话，还是通知
+    action=db.Column(db.String(20))
 
     def __init__(self, fromId, toId, content):
         self.content = content
         self.fromId = fromId
         self.toId = toId
         self.createtime = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
-        self.hasRead = 0;  # 默认为未读
+        self.hasRead = 0  # 默认为未读
         if fromId == -1:
             self.conversationId = '-1'
         elif fromId < toId:

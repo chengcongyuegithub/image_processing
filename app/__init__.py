@@ -59,5 +59,10 @@ app.register_blueprint(image_blueprint, url_prefix='/image')
 # 相册模块
 from .album import album as album_blueprint
 app.register_blueprint(album_blueprint, url_prefix='/album')
+
+# 相册模块
+from .dynamic import dynamic as dynamic_blueprint
+app.register_blueprint(dynamic_blueprint, url_prefix='/dynamic')
+
 # 主页
 from . import views

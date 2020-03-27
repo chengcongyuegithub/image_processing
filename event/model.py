@@ -14,8 +14,8 @@ class EventType(Enum):
 
 class EntityType(Enum):
     USER = 1
-    COMMENT = 3
     DYNAMIC = 2
+    COMMENT = 3
     ALBUM = 4
     IMAGE = 5
 

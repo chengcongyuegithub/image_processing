@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% block title %}发布动态{% endblock %}
+{% block styles %}
+<link type="text/css" href="{{ url_for('static',filename='css/adddynamic.css') }}" rel="stylesheet">
+{{super()}}
+{% endblock %}
+{% block container%}
+<div class="main">
+    <div class="panel panel-default adddynamic">
+        <div class="panel-body">
+             <form role="form" action="/dynamic/adddynamic" method="post" enctype="multipart/form-data">
+                <div class="form-group">
+                    <label>动态内容</label>
+                    <textarea class="form-control" name="dynamiccontent" rows="3"></textarea>
+                </div>
+                <div class="form-group">
+                    <label>选择图片(最多可选三张图片)</label>
+                    <input type="file" name="dynamicimg" id="dynamicimg" multiple />
+                </div>
+                <div class="form-group">
+                    <button type="submit" class="btn btn-default btn-warning">发布</button>&nbsp;&nbsp;&nbsp;
+                </div>
+              </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+{% block scripts %}
+{{super()}}
+<script type="text/javascript" src="../static/js/dynamic.js"></script>
+{% endblock %}

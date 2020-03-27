@@ -1,0 +1,16 @@
+.main {
+	width: 880px;
+	margin: 10px 0px 0px 130px;
+}
+.head{
+	width: 35px;
+    height: 35px;
+}
+.time{
+    font-size: 12px;
+}
+.action{
+    width: 150px;
+    position: relative;
+    margin: 0px 0px 0px 700px;
+}
