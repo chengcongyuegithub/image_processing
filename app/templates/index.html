@@ -15,7 +15,7 @@
             <label class="pull-right time">{{dynamic['time']}}</label>
         </div>
         <div class="panel-body">
-            <div> {{dynamic['content']}}
+            <div> {{dynamic['content']}} &nbsp;&nbsp;{% if dynamic['flag'] %}<label class="more"><a>全文</a></label>{% endif%}
             </div>
             <div class="row">
                 {% for img in dynamic['imgs'] %}
@@ -27,15 +27,15 @@
                 {% endfor %}
             </div>
             <div class="action">
-                <label>点赞</label>&nbsp;&nbsp;&nbsp;
-                <label>评论</label>&nbsp;&nbsp;&nbsp;
+                <label class="like">点赞</label>&nbsp;&nbsp;&nbsp;
+                <label class="commentlabel">评论</label>&nbsp;&nbsp;&nbsp;
                 <label>编辑</label>
             </div>
         </div>
         <div class="panel-footer commentpart">
             <ul class="list-unstyled">
                 {% for comment in dynamic['comments'] %}
-                <li id="{{comment['id']}}" class="{% if comment['actorname']!='-1'%}answercomment{% endif %}">
+                <li id="{{comment['id']}}" class="commentli">
                     <label >
                         <a id="{{comment['userid']}}" href="/user/{{comment['userid']}}"
                            class="answer">{{comment['name']}}</a>
@@ -44,6 +44,7 @@
                         {% endif%}
                         ：<span class="comment">{{comment['content']}}</span>
                     </label>
+                    <span class="pull-right glyphicon glyphicon-remove hide remove"></span>
                 </li>
                 {% endfor %}
             </ul>

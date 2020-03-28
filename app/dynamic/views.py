@@ -28,10 +28,17 @@ def index():
     else:
         return render_template('adddynamic.html')
 
+@dynamic.route("/more", methods={'get', 'post'})
+def more():
+    data = json.loads(request.get_data(as_text=True))
+    id = data['id']
+    dynamic=Dynamic.query.filter_by(id=id).first()
+    return jsonify(code=200,content=dynamic.content)
+
 @dynamic.route("/comment", methods={'get', 'post'})
 def comment():
     if isinstance(current_user.is_anonymous, bool):
-        return jsonify(code=400)
+        return jsonify(code=400,message='用户尚未登录，无法评论')
     data = json.loads(request.get_data(as_text=True))
     type=data['type']
     id = data['id']
@@ -52,3 +59,12 @@ def comment():
       db.session.commit()
       return jsonify(code=201, username=current_user.nickname, userid=current_user.id, content=content,
                      commentid=comment.id,actorname=actoruser.nickname)
+
+@dynamic.route("/deletecomment", methods={'get', 'post'})
+def deletecomment():
+    data = json.loads(request.get_data(as_text=True))
+    commentid = data['commentid']
+    comment = Comment.query.filter_by(id=commentid).first()
+    db.session.delete(comment)
+    db.session.commit()
+    return jsonify(code=200)

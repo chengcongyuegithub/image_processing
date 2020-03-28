@@ -325,7 +325,6 @@ def isread():
     print(current_user)
     return jsonify(code=200, message='信息已读')
 
-
 # 计算关注和被关注数量
 def followerandeecount(userid):
     followerkey = 'follower:1:' + userid  # 有哪些人关注了这个user

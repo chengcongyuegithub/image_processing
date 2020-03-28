@@ -21,10 +21,15 @@ $(document).ready(function () {
              success: function (res) {
                 if(res['code']=='200')
                 {
-                    var newcomment='<li id="'+res['commentid']+'"><label>' +
-                        '<a id="'+res['userid']+'" href="/user/'+res['userid']+'" class="answer">'+res['username']+'</a>：<span class="comment">'+res['content']+'</span></label></li>';
+                    var newcomment='<li class="commentli" id="'+res['commentid']+'"><label>' +
+                        '<a id="'+res['userid']+'" href="/user/'+res['userid']+'" class="answer">'+res['username']+'</a>：<span class="comment">&nbsp;'+res['content']+'</span></label>' +
+                        '<span class="pull-right glyphicon glyphicon-remove hide remove"></span></li>';
                     li.append(newcomment);
                     input.val('');
+                }else
+                {
+                    alertmsg=res['message'];
+                    $('#alertmodel').modal('show');
                 }
              }
          });
@@ -64,11 +69,80 @@ $(document).ready(function () {
              success: function (res) {
                 if(res['code']=='201')
                 {
-                    var newcomment='<li id="'+res['commentid']+'"><label>' +
-                        '<a id="'+res['userid']+'" href="/user/'+res['userid']+'" class="answer">'+res['username']+'</a>对&nbsp;<a>'+res['actorname']+'</a>：<span class="comment">'+res['content']+'</span></label></li>';
+                    var newcomment='<li class="commentli" id="'+res['commentid']+'"><label>' +
+                        '<a id="'+res['userid']+'" href="/user/'+res['userid']+'" class="answer">'+res['username']+'</a>对&nbsp;<a>'+res['actorname']+'</a>：<span class="comment">'+res['content']+'</span></label>' +
+                        '<span class="pull-right glyphicon glyphicon-remove hide remove"></span></li>';
                     li.append(newcomment);
                     $('.newcomment').remove();
+                }else
+                {
+                    alertmsg=res['message'];
+                    $('#alertmodel').modal('show');
+                    $('.newcomment').remove();
                 }
+             }
+         });
+     });
+     var alertmsg;
+     $('#alertmodel').on('shown.bs.modal', function() {
+          $('#alertmodel-part').load('/alert',{alertmsg:alertmsg});
+     });
+     $('.commentlabel').click(function () {
+        //获得焦点
+        $(this).parent().parent().next().children('div').children('input')[0].focus();
+     });
+     $('.more').click(function(){
+         var contentdiv=$(this).parent();
+         var dynamicid = $(this).parent().parent().parent().children('input[type=hidden]').val();
+         $.ajax({
+             url: '/dynamic/more',
+             type: 'post',
+             dataType: 'json',
+             data: JSON.stringify({
+                 id: dynamicid
+             }),
+             headers: {
+             "Content-Type": "application/json;charset=utf-8"
+             },
+             contentType: 'application/json; charset=utf-8',
+             success: function (res) {
+                 if(res['code']=='200')
+                 {
+                     contentdiv.text(res['content']);
+                 }
+             }
+         });
+     });
+     var currentuserid=$('#username').children('input[type=hidden]').val();
+     $('.commentpart').on('mouseover','.commentli',function(){
+          var userid=$(this).children().children('a').attr('id');
+          if(userid==currentuserid){
+                $(this).children('.remove').removeClass('hide');
+          }
+     });
+     $('.commentpart').on('mouseout','.commentli',function(){
+          $(this).children('.remove').addClass('hide');
+     });
+     //
+     $('.commentpart').on('click','.glyphicon-remove',function () {
+          var li=$(this).parent();
+          var commentid=li.attr('id');
+          $.ajax({
+             url: '/dynamic/deletecomment',
+             type: 'post',
+             dataType: 'json',
+             data: JSON.stringify({
+                 commentid: commentid
+             }),
+             headers: {
+             "Content-Type": "application/json;charset=utf-8"
+             },
+             contentType: 'application/json; charset=utf-8',
+             success: function (res) {
+                 if(res['code']=='200')
+                 {
+                     li.remove();
+                 }
              }
          });
      });

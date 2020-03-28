@@ -20,6 +20,7 @@
                 {% if current_user.is_authenticated %}
                 <li class="dropdown">
                 <a id="username" href="#" class="dropdown-toggle" data-toggle="dropdown">
+                    <input type="hidden" value="{{current_user.id}}"/>
                     &nbsp{{current_user.username}}<b class="caret"></b>
                 </a>
                 <ul class="dropdown-menu">
@@ -53,6 +54,10 @@
     <!--图片优化的模块-->
     <div class="modal fade" id="basesuperresolutionmodel" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
         <div id="basesuperresolutionmodel-part" class="modal-dialog">
+        </div>
+    </div>
+     <div class="modal fade" id="alertmodel" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+        <div id="alertmodel-part" class="modal-dialog">
         </div>
     </div>
 </div>

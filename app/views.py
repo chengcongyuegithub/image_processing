@@ -11,7 +11,11 @@ def index():
     for dynamic in dynamiclist:
         dict = {}
         dict['time'] = dynamic.changetime
-        dict['content'] = dynamic.content
+        if len(dynamic.content)>200:
+            dict['flag']=True
+        else:
+            dict['flag']=False
+        dict['content'] = dynamic.content[0:200]
         dict['id'] = dynamic.id
         imgs = Image.query.filter_by(dynamic_id=dynamic.id).all()
         imglist = []
@@ -54,3 +58,9 @@ def f(id,list,parentname):
         commentdict['content'] = comment.content
         list.append(commentdict)
         f(comment.id,list,user.nickname)
+
+@app.route("/alert",methods=['post','get'])
+def alert():
+    alertcontent=request.values.get('alertmsg')
+    print(alertcontent)
+    return render_template('alert.html',alertcontent=alertcontent)

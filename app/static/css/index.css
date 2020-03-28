@@ -14,3 +14,6 @@
     position: relative;
     margin: 0px 0px 0px 700px;
 }
+.commentlabel{
+    cursor:pointer
+}
