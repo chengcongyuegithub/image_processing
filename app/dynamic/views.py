@@ -2,7 +2,7 @@ from flask import *
 from flask_login import login_required, current_user
 from . import dynamic
 from app import db
-from app.models import Dynamic,Image,Comment
+from app.models import Dynamic,Image,Comment,User
 from app import fdfs_client,fdfs_addr
 
 @dynamic.route("/adddynamic", methods={'get', 'post'})
@@ -29,10 +29,26 @@ def index():
         return render_template('adddynamic.html')
 
 @dynamic.route("/comment", methods={'get', 'post'})
-@login_required
 def comment():
+    if isinstance(current_user.is_anonymous, bool):
+        return jsonify(code=400)
     data = json.loads(request.get_data(as_text=True))
-    dynamicid = data['dynamicid']
+    type=data['type']
+    id = data['id']
     content = data['content']
-    Comment(content,2,dynamicid)
-    return jsonify(code=200)
+    userid = data['userid']
+    if type=='dynamic':
+      comment=Comment(content,current_user.id,2,id)
+      db.session.add(comment)
+      db.session.flush()
+      db.session.commit()
+      return jsonify(code=200,username=current_user.nickname,userid=current_user.id,content=content,commentid=comment.id)
+    else:
+      if int(userid)==current_user.id:
+          return jsonify(code=400,message='用户不能回复自己')
+      actoruser=User.query.filter_by(id=userid).first()
+      comment = Comment(content, current_user.id, 3, id)
+      db.session.add(comment)
+      db.session.commit()
+      return jsonify(code=201, username=current_user.nickname, userid=current_user.id, content=content,
+                     commentid=comment.id,actorname=actoruser.nickname)

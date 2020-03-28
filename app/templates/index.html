@@ -32,20 +32,25 @@
                 <label>编辑</label>
             </div>
         </div>
-        <div class="panel-footer">
+        <div class="panel-footer commentpart">
             <ul class="list-unstyled">
-                <li><label><a>马天成</a>：啊啊啊啊啊，啦啦啦啦，这个动态真有意思</label></li>
-                <!--<li><label><a>黄天浩</a>：啊啊啊啊啊，啦啦啦啦，这个动态真有意思</label></li>
-                <li><label><a>我</a>回复<a>黄天浩</a>：啊啊啊啊啊，啦啦啦啦，这个动态真有意思</label></li>
-                <li><label><a>黄天浩</a>回复<a>我</a>：啊啊啊啊啊，啦啦啦啦，这个动态真有意思</label></li>
-                <li><label><a>马天成</a>：啊啊啊啊啊，啦啦啦啦，这个动态真有意思</label></li>-->
+                {% for comment in dynamic['comments'] %}
+                <li id="{{comment['id']}}" class="{% if comment['actorname']!='-1'%}answercomment{% endif %}">
+                    <label >
+                        <a id="{{comment['userid']}}" href="/user/{{comment['userid']}}"
+                           class="answer">{{comment['name']}}</a>
+                        {% if comment['actorname']!='-1'%}
+                        对<a>&nbsp;{{comment['actorname']}}</a> 回复
+                        {% endif%}
+                        ：<span class="comment">{{comment['content']}}</span>
+                    </label>
+                </li>
+                {% endfor %}
             </ul>
-            <form class="form-inline">
-                <div class="form-group">
-                     <input type="text" class="form-control" style="width:780px" id="name"placeholder="写出你的想法">
-                     <button type="button" class="btn btn-primary commentbtn">评论</button>
-                </div>
-            </form>
+            <div class="form-inline">
+                 <input type="text" class="form-control" style="width:780px" id="name" placeholder="写出你的想法">
+                 <button type="button" class="btn btn-primary commentbtn">评论</button>
+            </div>
         </div>
     </div>
     {% endfor %}

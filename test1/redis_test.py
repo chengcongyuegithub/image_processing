@@ -37,5 +37,5 @@ print(conn.zcard('album1:2'))
 
 #print(conn.zrank('followee:2:1','5'))
 
-count=conn.zcount('followee:3:1',0,sys.maxsize)
-print(count)
+#count=conn.zcount('followee:3:1',0,sys.maxsize)
+#print(count)
