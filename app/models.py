@@ -168,3 +168,21 @@ class Message(db.Model):
 
     def __repr__(self):
         return '<Message %d %d %s>' % (self.fromId, self.toId, self.content)
+
+# 新鲜事
+class Feed(db.Model):
+    __tablename__ = 'feed'
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    type=db.Column(db.Integer)
+    userId = db.Column(db.Integer)
+    createtime = db.Column(db.String(20))
+    data = db.Column(db.String(100))# 转成json的字典类型
+
+    def __init__(self, type, userId, data):
+        self.type = type
+        self.userId = userId
+        self.data = data
+        self.createtime = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
+
+    def __repr__(self):
+        return '<Feed %d %d %s>' % (self.type, self.userId, self.data)

@@ -1,8 +1,10 @@
 from .model import EventType
-from app.models import Message
-from app import db,largetaskexecutor
-from .largetask import deleteinbatch,srcnn_process
-
+from app.models import Message,User,Feed
+from app import db, largetaskexecutor, conn
+from .largetask import deleteinbatch, srcnn_process
+import sys
+import time
+import json
 
 class EventHandler():
     def dohandler(self, eventModel):
@@ -17,7 +19,7 @@ class FollowEventHandler(EventHandler):
         print('FollowEventHandler被创建了')
 
     def dohandler(self, eventModel):
-        message = Message(eventModel.actorId,eventModel.entityId, '名为 '+eventModel.dict['name']+' 的用户关注了你')
+        message = Message(eventModel.actorId, eventModel.entityId, '名为 ' + eventModel.dict['name'] + ' 的用户关注了你')
         db.session.add(message)
         db.session.commit()
 
@@ -65,10 +67,22 @@ class FeedEventHandler(EventHandler):
         print('RegistEventHandler被创建了')
 
     def dohandler(self, eventModel):
-        print('注册成功的时候')
+        followerkey = 'follower:1:' + str(eventModel.actorId)
+        feed=Feed(1,eventModel.actorId,json.dumps(eventModel.dict))
+        db.session.add(feed)
+        db.session.flush()
+        db.session.commit()
+        for userid in conn.zrange(followerkey, 0, sys.maxsize, desc=True, withscores=False, score_cast_func=float):
+            userid = str(userid, encoding="utf-8")
+            userid = int(userid)
+            user = User.query.filter_by(id=userid).first()
+            feedline='feedline:'+str(user.id)
+            conn.zadd(feedline, {feed.id: time.time()})
+
+    # print(eventModel)
 
     def getSupportEventTypes(self):
-        return [EventType.COMMENT, EventType.DYNAMIC]
+        return [EventType.COMMENT, EventType.DYNAMIC, EventType.FOLLOW, EventType.SHARE]
 
 
 class AlbumEventHandler(EventHandler):
@@ -99,18 +113,20 @@ class TaskEventHandler(EventHandler):
                 db.session.add(message)
                 db.session.commit()
         elif eventModel.dict['task'] == 'srcnn_process':
-            if eventModel.dict['action']=='SRCNN':# 清晰化处理
+            if eventModel.dict['action'] == 'SRCNN':  # 清晰化处理
                 print('清晰化处理')
-                task = largetaskexecutor.submit(srcnn_process,eventModel.entityId,eventModel.dict['albumid'],eventModel.entityOwnerId,eventModel.dict['action'])
-            else:# 放大处理
+                task = largetaskexecutor.submit(srcnn_process, eventModel.entityId, eventModel.dict['albumid'],
+                                                eventModel.entityOwnerId, eventModel.dict['action'])
+            else:  # 放大处理
                 print('放大处理')
-                task = largetaskexecutor.submit(srcnn_process,eventModel.entityId,eventModel.dict['albumid'],eventModel.entityOwnerId,eventModel.dict['action'],eventModel.dict['time'])
+                task = largetaskexecutor.submit(srcnn_process, eventModel.entityId, eventModel.dict['albumid'],
+                                                eventModel.entityOwnerId, eventModel.dict['action'],
+                                                eventModel.dict['time'])
             if task.result():
                 message = Message(-1, eventModel.entityOwnerId,
                                   '图片放大已经完成，请访问图片所在的相册')
                 db.session.add(message)
                 db.session.commit()
-
 
     def getSupportEventTypes(self):
         return [EventType.TASK]

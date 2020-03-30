@@ -50,4 +50,10 @@ print(conn.zcard('album1:2'))
 
 #print(conn.sismember('like:2',10))
 #print(conn.get('!'))
-print(conn.scard('??'))
+#print(conn.scard('??'))
+
+dict={'name':'ccy','age':'18','sex':'男'}
+print(dict)
+print(type(dict))
+jsonstr=json.dumps(dict)
+print(eval(jsonstr))

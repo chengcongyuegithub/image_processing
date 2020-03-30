@@ -10,7 +10,9 @@ class EventType(Enum):
     DYNAMIC = 6
     REGIST = 7
     ALBUM = 8
-    TASK = 9 #大任务量
+    TASK = 9  # 大任务量
+    SHARE = 10 # 分享
+
 
 class EntityType(Enum):
     USER = 1

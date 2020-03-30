@@ -1,5 +1,5 @@
 from . import user, login_manager
-from app.models import User, Message, Photoalbum,Dynamic,Image
+from app.models import User, Message, Photoalbum, Dynamic, Image, Feed
 from app.views import getAllComment
 from flask import *
 from flask_login import login_user, logout_user, login_required, current_user
@@ -43,8 +43,8 @@ def index():
             dict['likeflag'] = conn.sismember(rediskey, current_user.id)
         indexlist.append(dict)
     followercount, followeecount = followerandeecount(str(current_user.id))
-    like=str(likecount(str(current_user.id)),encoding="utf-8")
-    return render_template('user.html', likecount=like,userlist=indexlist,
+    like = str(likecount(str(current_user.id)), encoding="utf-8")
+    return render_template('user.html', likecount=like, userlist=indexlist,
                            user=current_user, followercount=followercount, followeecount=followeecount)
 
 
@@ -73,7 +73,8 @@ def follow():
     conn.zadd(followerkey, {current_user.id: time.time()})
     conn.zadd(followeekey, {userid: time.time()})
     # 发送私信
-    fireEvent(EventModel(EventType.FOLLOW, current_user.id, EntityType.USER, userid, userid, {'name':current_user.nickname}))
+    fireEvent(
+        EventModel(EventType.FOLLOW, current_user.id, EntityType.USER, userid, userid, {'name': current_user.nickname}))
     return jsonify(code=200)
 
 
@@ -136,10 +137,11 @@ def otheruser(userid):
             dict['likeflag'] = conn.sismember(rediskey, current_user.id)
         indexlist.append(dict)
     followercount, followeecount = followerandeecount(userid)
-    like = str(likecount(userid),encoding="utf-8")
+    like = str(likecount(userid), encoding="utf-8")
     # 获得赞数量
-    return render_template('otheruser.html', user=user, likecount=like,msgflag=msgflag, updateflag=True, followflag=isfollow,
-                           followercount=followercount, followeecount=followeecount,userlist=indexlist)
+    return render_template('otheruser.html', user=user, likecount=like, msgflag=msgflag, updateflag=True,
+                           followflag=isfollow,
+                           followercount=followercount, followeecount=followeecount, userlist=indexlist)
 
 
 @user.route("/follower<userid>")
@@ -210,8 +212,9 @@ def useralbum():
         dict['lookmore'] = False if len(album.introduce) < 7 else True
         albumdictlist.append(dict)
     followercount, followeecount = followerandeecount(str(current_user.id))
-    like=str(likecount(str(current_user.id)),encoding="utf-8")
-    return render_template('useralbum.html', likecount=like,albumlist=albumdictlist, user=current_user, followercount=followercount,
+    like = str(likecount(str(current_user.id)), encoding="utf-8")
+    return render_template('useralbum.html', likecount=like, albumlist=albumdictlist, user=current_user,
+                           followercount=followercount,
                            followeecount=followeecount)
 
 
@@ -384,12 +387,41 @@ def isread():
     print(current_user)
     return jsonify(code=200, message='信息已读')
 
+
+@user.route('/feed')
+@login_required
+def feed():
+    feedline = 'feedline:' + str(current_user.id)
+    feedlist=[]
+    for feedid in conn.zrange(feedline, 0, sys.maxsize, desc=True, withscores=False, score_cast_func=float):
+        dict={}
+        feedid = str(feedid, encoding="utf-8")
+        feedid = int(feedid)
+        feed=Feed.query.filter_by(id=feedid).first()
+        user=User.query.filter_by(id=feed.userId).first()
+        dict['name']=user.nickname
+        dict['id']=user.id
+        dict['headurl']=user.head_url
+        if feed.type==1:# 动态的话
+            dict['action']='发布了动态'
+        elif feed.type==2: # 关注的其他人
+            dict['action']='关注了别人'
+        elif feed.type==3: # 评论了
+            dict['action']='评论了动态'
+        elif feed.type==4:
+            dict['action']='分享了系统的功能'
+        dict['data']=eval(feed.data)# 字典类型
+        feedlist.append(dict)
+    return render_template('feed.html',feedlist=feedlist)
+
+
 # 获赞数量
 def likecount(userid):
-    rediskey='likeuser:'+userid
-    if conn.get(rediskey)==None:
+    rediskey = 'likeuser:' + userid
+    if conn.get(rediskey) == None:
         return b'0'
     return conn.get(rediskey)
+
 
 # 计算关注和被关注数量
 def followerandeecount(userid):
@@ -400,7 +432,7 @@ def followerandeecount(userid):
     return followercount, followeecount
 
 
-# 关注列表
+# 被关注列表
 def followerlist(userid):
     followerkey = 'follower:1:' + userid
     followerdictlist = []
@@ -416,7 +448,7 @@ def followerlist(userid):
     return followerdictlist
 
 
-# 被关注列表
+# 关注列表
 def followeelist(userid):
     followeekey = 'followee:' + userid + ':1'
     followeelist = []

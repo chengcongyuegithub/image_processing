@@ -4,7 +4,8 @@ from . import dynamic
 from app import db, conn
 from app.models import Dynamic, Image, Comment, User
 from app import fdfs_client, fdfs_addr
-
+from event.event_queue import fireEvent
+from event.model import EventType,EventModel,EntityType
 
 @dynamic.route("/adddynamic", methods={'get', 'post'})
 @login_required
@@ -25,6 +26,8 @@ def index():
             img = Image(name, url, 'Origin', -1, current_user.id, dynamic.id)
             db.session.add(img)
         db.session.commit()
+        fireEvent(EventModel(EventType.DYNAMIC, current_user.id, EntityType.DYNAMIC, dynamic.id, current_user.id,
+                             {'dynamicdetail': 'www.baidu.com'}))
         return redirect('/')
     else:
         return render_template('adddynamic.html')
