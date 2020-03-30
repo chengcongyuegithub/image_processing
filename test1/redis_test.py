@@ -39,3 +39,15 @@ print(conn.zcard('album1:2'))
 
 #count=conn.zcount('followee:3:1',0,sys.maxsize)
 #print(count)
+
+# likeuser:userid string
+# like:dynamicid set
+
+#conn.sadd('like:2','1')
+#conn.smembers('like:2')
+#print(conn.scard('like:2'))
+#print(conn.smembers('like:4'))
+
+#print(conn.sismember('like:2',10))
+#print(conn.get('!'))
+print(conn.scard('??'))

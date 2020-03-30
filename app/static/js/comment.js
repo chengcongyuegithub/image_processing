@@ -146,4 +146,37 @@ $(document).ready(function () {
              }
          });
      });
+     $('.likelabel').click(function(){
+         var like=$(this);
+         var dynamicid = like.parent().parent().parent().children('input[type=hidden]').val();
+         //alert(dynamicid);
+         $.ajax({
+             url: '/dynamic/like',
+             type: 'post',
+             dataType: 'json',
+             data: JSON.stringify({
+                 dynamicid: dynamicid
+             }),
+             headers: {
+             "Content-Type": "application/json;charset=utf-8"
+             },
+             contentType: 'application/json; charset=utf-8',
+             success: function (res) {
+                 //点赞之后返回200
+                 if(res['code']=='200')
+                 {
+                     like.text('已点赞('+res['likecount']+')');
+                 }
+                 else if(res['code']=='201')//取消点赞之后返回201
+                 {
+                     like.text('点赞');
+                 }else
+                 {
+                      alertmsg=res['message'];
+                      $('#alertmodel').modal('show');
+                      $('.newcomment').remove();
+                 }
+             }
+         });
+     });
 });

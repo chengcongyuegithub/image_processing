@@ -1,5 +1,6 @@
 from . import user, login_manager
-from app.models import User, Message, Photoalbum
+from app.models import User, Message, Photoalbum,Dynamic,Image
+from app.views import getAllComment
 from flask import *
 from flask_login import login_user, logout_user, login_required, current_user
 from event.event_queue import fireEvent
@@ -14,8 +15,37 @@ import sys
 @user.route("/myspace")
 @login_required
 def index():
+    # 动态
+    dynamiclist = Dynamic.query.filter_by(user_id=current_user.id).order_by(Dynamic.changetime.desc()).all()
+    indexlist = []
+    for dynamic in dynamiclist:
+        dict = {}
+        dict['time'] = dynamic.changetime
+        if len(dynamic.content) > 200:
+            dict['flag'] = True
+        else:
+            dict['flag'] = False
+        dict['content'] = dynamic.content[0:200]
+        dict['id'] = dynamic.id
+        imgs = Image.query.filter_by(dynamic_id=dynamic.id).all()
+        imglist = []
+        for img in imgs:
+            imglist.append(img.url)
+        dict['imgs'] = imglist
+        commentslist = []
+        getAllComment(commentslist, dynamic.id)
+        dict['comments'] = commentslist
+        rediskey = 'like:' + str(dynamic.id)
+        dict['likecount'] = conn.scard(rediskey)
+        if isinstance(current_user.is_anonymous, bool):
+            dict['likeflag'] = False
+        else:
+            dict['likeflag'] = conn.sismember(rediskey, current_user.id)
+        indexlist.append(dict)
     followercount, followeecount = followerandeecount(str(current_user.id))
-    return render_template('user.html', user=current_user, followercount=followercount, followeecount=followeecount)
+    like=str(likecount(str(current_user.id)),encoding="utf-8")
+    return render_template('user.html', likecount=like,userlist=indexlist,
+                           user=current_user, followercount=followercount, followeecount=followeecount)
 
 
 @user.route("/follower")
@@ -79,9 +109,37 @@ def otheruser(userid):
         else:
             isfollow = False
     # 当前用户的关注
+    dynamiclist = Dynamic.query.filter_by(user_id=userid).order_by(Dynamic.changetime.desc()).all()
+    indexlist = []
+    for dynamic in dynamiclist:
+        dict = {}
+        dict['time'] = dynamic.changetime
+        if len(dynamic.content) > 200:
+            dict['flag'] = True
+        else:
+            dict['flag'] = False
+        dict['content'] = dynamic.content[0:200]
+        dict['id'] = dynamic.id
+        imgs = Image.query.filter_by(dynamic_id=dynamic.id).all()
+        imglist = []
+        for img in imgs:
+            imglist.append(img.url)
+        dict['imgs'] = imglist
+        commentslist = []
+        getAllComment(commentslist, dynamic.id)
+        dict['comments'] = commentslist
+        rediskey = 'like:' + str(dynamic.id)
+        dict['likecount'] = conn.scard(rediskey)
+        if isinstance(current_user.is_anonymous, bool):
+            dict['likeflag'] = False
+        else:
+            dict['likeflag'] = conn.sismember(rediskey, current_user.id)
+        indexlist.append(dict)
     followercount, followeecount = followerandeecount(userid)
-    return render_template('otheruser.html', user=user, msgflag=msgflag, updateflag=True, followflag=isfollow,
-                           followercount=followercount, followeecount=followeecount)
+    like = str(likecount(userid),encoding="utf-8")
+    # 获得赞数量
+    return render_template('otheruser.html', user=user, likecount=like,msgflag=msgflag, updateflag=True, followflag=isfollow,
+                           followercount=followercount, followeecount=followeecount,userlist=indexlist)
 
 
 @user.route("/follower<userid>")
@@ -152,7 +210,8 @@ def useralbum():
         dict['lookmore'] = False if len(album.introduce) < 7 else True
         albumdictlist.append(dict)
     followercount, followeecount = followerandeecount(str(current_user.id))
-    return render_template('useralbum.html', albumlist=albumdictlist, user=current_user, followercount=followercount,
+    like=str(likecount(str(current_user.id)),encoding="utf-8")
+    return render_template('useralbum.html', likecount=like,albumlist=albumdictlist, user=current_user, followercount=followercount,
                            followeecount=followeecount)
 
 
@@ -324,6 +383,13 @@ def isread():
     db.session.commit()
     print(current_user)
     return jsonify(code=200, message='信息已读')
+
+# 获赞数量
+def likecount(userid):
+    rediskey='likeuser:'+userid
+    if conn.get(rediskey)==None:
+        return b'0'
+    return conn.get(rediskey)
 
 # 计算关注和被关注数量
 def followerandeecount(userid):

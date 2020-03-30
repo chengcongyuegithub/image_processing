@@ -1,6 +1,7 @@
 from flask import *
-from app import app, db
+from app import app, db, conn
 from .models import Dynamic, Image, User, Comment
+from flask_login import current_user
 
 
 @app.route("/")
@@ -11,10 +12,10 @@ def index():
     for dynamic in dynamiclist:
         dict = {}
         dict['time'] = dynamic.changetime
-        if len(dynamic.content)>200:
-            dict['flag']=True
+        if len(dynamic.content) > 200:
+            dict['flag'] = True
         else:
-            dict['flag']=False
+            dict['flag'] = False
         dict['content'] = dynamic.content[0:200]
         dict['id'] = dynamic.id
         imgs = Image.query.filter_by(dynamic_id=dynamic.id).all()
@@ -26,13 +27,20 @@ def index():
                 dict['name'] = user.nickname
                 dict['headurl'] = user.head_url
         dict['imgs'] = imglist
-        commentslist=[]
-        getAllComment(commentslist,dynamic.id)
-        dict['comments']=commentslist
+        commentslist = []
+        getAllComment(commentslist, dynamic.id)
+        dict['comments'] = commentslist
+        rediskey = 'like:' + str(dynamic.id)
+        dict['likecount']=conn.scard(rediskey)
+        if isinstance(current_user.is_anonymous, bool):
+            dict['likeflag']=False
+        else:
+            dict['likeflag']=conn.sismember(rediskey,current_user.id)
         indexlist.append(dict)
     return render_template('index.html', indexlist=indexlist)
 
-def getAllComment(commentslist,id):
+
+def getAllComment(commentslist, id):
     comments = Comment.query.filter_by(entityType=2, entityId=id).all()
     for comment in comments:
         commentdict = {}
@@ -43,11 +51,12 @@ def getAllComment(commentslist,id):
         commentdict['actorname'] = '-1'
         commentdict['content'] = comment.content
         commentslist.append(commentdict)
-        f(comment.id, commentslist,user.nickname)
+        f(comment.id, commentslist, user.nickname)
 
-def f(id,list,parentname):
+
+def f(id, list, parentname):
     comments = Comment.query.filter_by(entityType=3, entityId=id).all()
-    if comments==None: return
+    if comments == None: return
     for comment in comments:
         commentdict = {}
         user = User.query.filter_by(id=comment.entityOwnerId).first()
@@ -57,10 +66,10 @@ def f(id,list,parentname):
         commentdict['actorname'] = parentname
         commentdict['content'] = comment.content
         list.append(commentdict)
-        f(comment.id,list,user.nickname)
+        f(comment.id, list, user.nickname)
 
-@app.route("/alert",methods=['post','get'])
+
+@app.route("/alert", methods=['post', 'get'])
 def alert():
-    alertcontent=request.values.get('alertmsg')
-    print(alertcontent)
-    return render_template('alert.html',alertcontent=alertcontent)
+    alertcontent = request.values.get('alertmsg')
+    return render_template('alert.html', alertcontent=alertcontent)

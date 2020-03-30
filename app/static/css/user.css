@@ -87,7 +87,6 @@
 label:first-of-type {
 	margin-left: 0;
 }
-label:hover { color: green;}
 .mod{
     background: white;
 	width: 100%;
@@ -110,4 +109,15 @@ input[type=radio]:checked+.tab-label {
 }
 input[type=radio]:checked+label+div {
 	display: block;
+}
+.time{
+    font-size: 12px;
+}
+.action{
+    width: 150px;
+    position: relative;
+    margin: 0px 0px 0px 750px;
+}
+.commentlabel,.likelabel,.updatelabel{
+    cursor:pointer
 }

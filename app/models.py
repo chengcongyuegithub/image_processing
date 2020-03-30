@@ -8,11 +8,12 @@ class Dynamic(db.Model):
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     content = db.Column(db.Text)
     changetime = db.Column(db.String(20))
+    user_id=db.Column(db.Integer)
 
-    def __init__(self, content):
+    def __init__(self, content,user_id):
         self.content = content
         self.changetime = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
-
+        self.user_id=user_id
     def __repr__(self):
         return '<Dynamic %s>' % (self.content)
 
