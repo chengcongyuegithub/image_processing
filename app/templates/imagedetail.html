@@ -27,9 +27,9 @@
             <li><a href="#">3x</a></li>
             </ul>
          </div>
-        {% if img.action=='SRCNN'%}
+        {% if img.action==2 %}
         <button type="button" class="comparebtn btn btn-primary">比较图片</button>
-        {% elif img.action!='superresolution' and img.action!='Origin'%}
+        {% elif img.action!=2 and img.action!=1%}
         <button type="button" class="comparebtn btn btn-primary">比较放大图片</button>
         {% endif %}
         <div id="myAlert" class="alert alert-danger hide">

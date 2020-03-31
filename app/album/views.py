@@ -3,6 +3,7 @@ from flask_login import login_required, current_user
 from . import album
 from app.models import Photoalbum, Image
 from app import fdfs_client, fdfs_addr, db, conn
+from app.views import byte2int
 from event.event_queue import fireEvent
 from event.model import EventType, EventModel, EntityType
 import sys
@@ -14,8 +15,9 @@ def index(albumid):
     rediskey = 'album:' + str(current_user.id) + ':' + albumid
     imglist = []
     for imgid in conn.zrange(rediskey, 0, sys.maxsize, desc=True, withscores=False, score_cast_func=float):
-        imgid = str(imgid, encoding="utf-8")
-        imgid = int(imgid)
+        #imgid = str(imgid, encoding="utf-8")
+        #imgid = int(imgid)
+        imgid=byte2int(imgid)
         img = Image.query.filter_by(id=imgid).first()
         imglist.append(img)
     return render_template('albumdetail.html', imglist=imglist, albumid=albumid)
@@ -30,8 +32,7 @@ def ajaxdetail():
     imglist = []
     for imgid in conn.zrange(rediskey, 0,sys.maxsize, desc=True, withscores=False, score_cast_func=float):
         dict={}
-        imgid = str(imgid, encoding="utf-8")
-        imgid = int(imgid)
+        imgid = byte2int(imgid)
         img = Image.query.filter_by(id=imgid).first()
         if img.action=='Origin':
             proimg = Image.query.filter_by(orig_id=imgid).first()
@@ -97,7 +98,7 @@ def addalb():
             suffix = filename[filename.find('.') + 1:]
             url = fdfs_addr + fdfs_client.uploadbyBuffer(f, suffix)
         else:
-            url = '/static/img/bird_GT.bmp'
+            url = '/static/img/kittens.jpg'
         # 数据库添加字典的内容
         photoalbum = Photoalbum(name, introduce, url)
         db.session.add(photoalbum)

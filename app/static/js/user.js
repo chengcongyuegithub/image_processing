@@ -2,6 +2,7 @@ $(document).ready(function(){
   var nickname=$('.username').text();
   var userid=$('#userid').val();
   var headurl=$('.userimg').attr('src');
+  // 选项板的切换
   $(".tab-label").click(function(){
         var tab=$(this).attr('id');
         if(tab=='dynamictab')
@@ -12,11 +13,37 @@ $(document).ready(function(){
             $(location).attr('href', '/user/useralbum');
         }
   });
+  // 显示编辑用户模态框
   $('.updateuserbtn').click(function(){
          $('#updateusermodel').modal('show');
     });
-    $('#updateusermodel').on('shown.bs.modal', function () {
+  // 显示模态框
+  $('#updateusermodel').on('shown.bs.modal', function () {
          $('#updateusermodel-part').load('/user/updateuser', {userid:userid},function () {
+              $('form').bootstrapValidator({
+                  message: 'This value is not valid',
+                　feedbackIcons: {
+                    　　　　　　　　valid: 'glyphicon glyphicon-ok',
+                    　　　　　　　　invalid: 'glyphicon glyphicon-remove',
+                    　　　　　　　　validating: 'glyphicon glyphicon-refresh'
+                　　　　　　　　   },
+                fields: {
+                    nickname: {
+                        validators: {
+                            notEmpty: {
+                                message: '用户名不能为空'
+                            }
+                        }
+                    },
+                    signature: {
+                        validators: {
+                            notEmpty: {
+                                message: '个人签名不能为空'
+                            }
+                        }
+                    }
+                }
+            });
              $('#headurl').fileinput({
                 language: 'zh', //设置语言
                 allowedFileExtensions: ['jpg', 'gif', 'png', 'bmp'],
@@ -35,6 +62,8 @@ $(document).ready(function(){
             });
          });
      });
+
+  //
   $('.opensendmsgbtn').click(function(){
          $('#sendmsgmodel').modal('show');
   });

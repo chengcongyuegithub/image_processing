@@ -1,7 +1,7 @@
 from app import db
 import time
 import random
-
+from enum import Enum
 
 class Dynamic(db.Model):
     __tablename__ = 'dynamic'
@@ -30,13 +30,14 @@ class User(db.Model):
     # 个性签名
     signature = db.Column(db.String(100))
 
-    def __init__(self, username, password, salt=''):
+    def __init__(self, username, password,signature,salt=''):
         self.username = username
         self.nickname = username
         self.password = password
         self.head_url = self.head_url = 'http://images.nowcoder.com/head/' + str(random.randint(0, 1000)) + 't.png'
         self.salt = salt
         self.changetime = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
+        self.signature=signature
 
     def __repr__(self):
         return '<User %s %s %s>' % (self.username, self.password, self.head_url)
@@ -53,6 +54,13 @@ class User(db.Model):
     def get_id(self):
         return self.id
 
+class ImageType(Enum):
+    ORIGIN=1
+    SRCNN=2
+    UPSCALE_2X=3
+    UPSCALE_3X=4
+    BICUBIC_UPSCALE_2X = 5
+    BICUBIC_UPSCALE_3X = 6
 
 class Image(db.Model):
     __tablename__ = 'image'
@@ -69,7 +77,7 @@ class Image(db.Model):
     # SRCNN:卷积神经网络处理
     # Origin:原图或者没有处理
     # Upscale_X:放大多少倍数,如Upscale_3X表示放大3倍
-    action = db.Column(db.String(20))
+    action = db.Column(db.Integer)
     # 原图id
     # 如果是原图的话,表示为-1
     orig_id = db.Column(db.Integer)
@@ -82,7 +90,7 @@ class Image(db.Model):
         self.name = name
         self.url = url
         self.changetime = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
-        self.action = action
+        self.action = action.value
         self.orig_id = orig_id
         self.user_id = user_id
         self.dynamic_id = dynamic_id
@@ -132,6 +140,10 @@ class Comment(db.Model):
         return '<Comment %s %d %d %s>' % (self.name, self.entityType, self.entityId)
 
 
+class MessageType(Enum):
+    NOTICE=1
+    TALK=2
+
 class Message(db.Model):
     __tablename__ = 'message'
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
@@ -151,9 +163,10 @@ class Message(db.Model):
     # conversationId 2to10
     conversationId = db.Column(db.String(20))
     #action的类型，是谈话，还是通知
-    action=db.Column(db.String(20))
+    # notice or talk
+    action=db.Column(db.Integer)
 
-    def __init__(self, fromId, toId, content):
+    def __init__(self, fromId, toId, content,action):
         self.content = content
         self.fromId = fromId
         self.toId = toId
@@ -165,6 +178,7 @@ class Message(db.Model):
             self.conversationId = str(fromId) + 'to' + str(toId)
         else:
             self.conversationId = str(toId) + 'to' + str(fromId)
+        self.action=action.value
 
     def __repr__(self):
         return '<Message %d %d %s>' % (self.fromId, self.toId, self.content)

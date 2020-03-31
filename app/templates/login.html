@@ -13,7 +13,7 @@
              {% endif %}
              <label for="r-1" class="tab-label">login</label>
              <div class="mod">
-                <form action="/user/login" method="post" role="form">
+                <form id='loginform' action="/user/login" method="post" role="form">
                   <input type="hidden" name="next" value="{{next}}">
                   <div class="form-group">
                       <label class="col-sm-2 control-label">用户名</label>
@@ -73,4 +73,8 @@
                 {% endif%}
             </div>
     </div>
+{% endblock %}
+{% block scripts %}
+{{super()}}
+<script type="text/javascript" src="../static/js/login.js"></script>
 {% endblock %}

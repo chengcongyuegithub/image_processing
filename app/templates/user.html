@@ -8,19 +8,20 @@
 <div class="header panel panel-default">
 			<img class="userimg" src="{{user.head_url}}" />
 			<input type="hidden" id='userid'value="{{user.id}}"/>
-			<label class="text-success username">{{user.nickname}}</label>
+			<label class="text-success username">{{user.nickname}}&nbsp;&nbsp;&nbsp;</label>
+            <label class="text-success signature">{{user.signature}}</label>
 			<div class="numdiv">
 				<div class="numdivs">
 					<label class="numname text-success">获赞数</label>
-					<a class="num">{{likecount}}</a>
+					<a class="num">{{userinfodict['like']}}</a>
 				</div>
 				<div class="numdivs">
 					<label class="numname text-success">关注</label>
-					<a href='/user/followee{{user.id}}'class="num">{{followeecount}}</a>
+					<a href='/user/followee{{user.id}}'class="num">{{userinfodict['followeecount']}}</a>
 				</div>
 				<div class="numdivs">
 					<label class="numname text-success">被关注</label>
-					<a href='/user/follower{{user.id}}' class="num">{{followercount}}</a>
+					<a href='/user/follower{{user.id}}' class="num">{{userinfodict['followercount']}}</a>
 				</div>
 			</div>
 

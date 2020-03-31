@@ -43,7 +43,7 @@ for sc in EventHandler.__subclasses__():
 # 异步任务消费者线程启动
 from event.event_queue import *
 EventThread('task_queue_thread').start()
-# 任务列表，实际上只存一个正在运行的任务
+#任务列表，实际上只存一个正在运行的任务
 
 
 from .models import *

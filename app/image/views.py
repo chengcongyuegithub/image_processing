@@ -1,7 +1,7 @@
 from . import image
 from flask import *
 from app import fdfs_client, fdfs_addr, db, conn, cv, tf
-from app.models import Image, Photoalbum
+from app.models import Image,ImageType,Photoalbum
 from flask_login import current_user
 import time
 import numpy as np
@@ -23,14 +23,14 @@ def index():
         url = fdfs_addr + fdfs_client.uploadbyBuffer(f, suffix)
         name = url[url.rfind('/') + 1:]
         # 上传到数据库
-        img = Image(name, url, 'Origin', -1, current_user.id, -1)
+        img = Image(name, url, ImageType.ORIGIN, -1, current_user.id, -1)
         db.session.add(img)
         db.session.flush()
         db.session.commit()
         # 添加到相册中，默认是添加到系统相册中
         if albumid == None or albumid == '' or albumid == '1':
             rediskey = 'album:' + str(current_user.id) + ':1'
-        else:
+        else:# 指定相册
             rediskey = 'album:' + str(current_user.id) + ':' + albumid
         conn.zadd(rediskey, {img.id: time.time()})
         return jsonify(code=200, message="success upload")
@@ -80,9 +80,12 @@ def upscaling():
     time = data['time']
     upscalingimg = Image.query.filter_by(id=imgid).first()
     # 对于已经处理过的情况的处理
-    if upscalingimg.action != 'Origin':
+    if ImageType(upscalingimg.action) != ImageType.ORIGIN:
         return jsonify(code=400, message='此图片为处理过的图片，请选择其他功能')
-    upscalingimg = Image.query.filter_by(action='Upscale_' + time, orig_id=imgid).first()
+    if time=='2x':
+        upscalingimg = Image.query.filter_by(action=ImageType.UPSCALE_2X.value, orig_id=imgid).first()
+    else:
+        upscalingimg = Image.query.filter_by(action=ImageType.UPSCALE_3X.value, orig_id=imgid).first()
     if upscalingimg != None:
         return jsonify(code=401, message='此图片已经优化过,请在该相册中查找')
     img = Image.query.filter_by(id=imgid).first()
@@ -90,14 +93,20 @@ def upscaling():
     imgContent = fdfs_client.downloadbyBuffer(img.url[len(fdfs_addr):])
     img = cv.imdecode(np.frombuffer(imgContent, np.uint8), cv.IMREAD_COLOR)
     print(img.shape)
-    if int(time[0:1]) == 3 and (img.shape[0] > 500 or img.shape[1] > 500):
+    if time=='3x' and (img.shape[0] > 500 or img.shape[1] > 500):
         return jsonify(code=402, message='该图片尺寸较大，将无法执行放大操作，请选择其他操作')
-    if int(time[0:1]) == 2 and (img.shape[0] > 800 or img.shape[1] > 800):
+    if time=='2x' and (img.shape[0] > 800 or img.shape[1] > 800):
         return jsonify(code=402, message='该图片尺寸较大，将无法执行放大操作，请选择其他操作')
     # 丢给线程池
-    fireEvent(EventModel(EventType.TASK, current_user.id, EntityType.IMAGE, imgid, current_user.id,
-                         {'task': 'srcnn_process', 'action': 'Upscale_' + time, 'suffix': suffix, 'albumid': albumid,
+    if time == '3x':
+        fireEvent(EventModel(EventType.TASK, current_user.id, EntityType.IMAGE, imgid, current_user.id,
+                         {'task': 'srcnn_process', 'action': ImageType.UPSCALE_3X.value, 'suffix': suffix, 'albumid': albumid,
                           'time': time}))
+    elif time=='2x':
+        fireEvent(EventModel(EventType.TASK, current_user.id, EntityType.IMAGE, imgid, current_user.id,
+                             {'task': 'srcnn_process', 'action': ImageType.UPSCALE_2X.value, 'suffix': suffix,
+                              'albumid': albumid,
+                              'time': time}))
     return jsonify(code=200, message='得到的图片较大，稍后以私信的信息通知你')
 
 
@@ -108,23 +117,21 @@ def superresolution():
         imgid = data['imgid']
         albumid = data['albumid']
         flag = data['flag']
-        print(flag)
         srcnnimg = Image.query.filter_by(id=imgid).first()
-        if srcnnimg.action != 'Origin':
+        if ImageType(srcnnimg.action)!=ImageType.ORIGIN:
             return jsonify(code=400, message='此图片为处理过的图片，请选择其他功能')
-        srcnnimg = Image.query.filter_by(action='SRCNN', orig_id=imgid).first()
+        srcnnimg = Image.query.filter_by(action=ImageType.ORIGIN.value, orig_id=imgid).first()
         if srcnnimg != None:
-            return jsonify(code=401, message='此图片已经优化过,请在该相册中查找');
+            return jsonify(code=401, message='此图片已经优化过,请在该相册中查找')
         img = Image.query.filter_by(id=imgid).first()
         suffix = img.name[img.name.find('.') + 1:]
         imgContent = fdfs_client.downloadbyBuffer(img.url[len(fdfs_addr):])
         img = cv.imdecode(np.frombuffer(imgContent, np.uint8), cv.IMREAD_COLOR)
-        print(img.shape)
         if img.shape[0] > 1500 or img.shape[1] > 1500:
             return jsonify(code=402, message='该图片尺寸较大,执行该操作会导致内存泄漏')
         if img.shape[0] > 900 or img.shape[1] > 900:  # 大型任务，交给线程池处理
             fireEvent(EventModel(EventType.TASK, current_user.id, EntityType.IMAGE, imgid, current_user.id,
-                                 {'task': 'srcnn_process', 'action': 'SRCNN', 'suffix': suffix,
+                                 {'task': 'srcnn_process', 'action': ImageType.SRCNN.value, 'suffix': suffix,
                                   'albumid': albumid}))
             if flag==True:
                 return jsonify(code=203, message='请去图片所在相册查看结果')
@@ -140,7 +147,7 @@ def superresolution():
             # 保存并上传数据库
             url = fdfs_addr + fdfs_client.uploadbyBuffer(f, suffix)
             imgname = url[url.rfind('/') + 1:]
-            newimg = Image(imgname, url, 'SRCNN', imgid, current_user.id, -1)
+            newimg = Image(imgname, url, ImageType.SRCNN, imgid, current_user.id, -1)
             db.session.add(newimg)
             db.session.flush()
             db.session.commit()
@@ -175,16 +182,24 @@ def compare():
         return jsonify(code=400)
     img = Image.query.filter_by(id=imgid).first()
     orginimg = Image.query.filter_by(id=img.orig_id).first()  # 原图
-    if img.action == 'SRCNN':
+    if ImageType(img.action) == ImageType.SRCNN:
         return jsonify(code=200, message='和原图进行比较', url=orginimg.url)
     else:
-        times = img.action[8:9]  # Upscale_2x
-        print(times)
+        if ImageType(img.action)==ImageType.UPSCALE_2X:
+            times = 2  # Upscale_2x
+            eimg=Image.query.filter_by(orig_id=img.orig_id, action=ImageType.BICUBIC_UPSCALE_2X.value).first()
+            if eimg!=None:
+                return jsonify(code=201)
+        elif ImageType(img.action)==ImageType.UPSCALE_3X:
+            times = 3
+            eimg = Image.query.filter_by(orig_id=img.orig_id, action=ImageType.BICUBIC_UPSCALE_3X.value).first()
+            if eimg != None:
+                return jsonify(code=201)
         imgContent = fdfs_client.downloadbyBuffer(orginimg.url[len(fdfs_addr):])
         orgimg = cv.imdecode(np.frombuffer(imgContent, np.uint8), cv.IMREAD_COLOR)
         with tf.Session() as sess:
             srcnn = SRCNN(sess, "../srcnn/checkpoint")
-            img = srcnn.upscaling(orgimg, int(times), False)
+            img = srcnn.upscaling(orgimg, times, False)
         img = Img.fromarray(img)
         f = BytesIO()
         img.save(f, format='PNG')
@@ -192,7 +207,10 @@ def compare():
         suffix = orginimg.name[orginimg.name.find('.') + 1:]
         url = fdfs_addr + fdfs_client.uploadbyBuffer(f, suffix)
         imgname = url[url.rfind('/') + 1:]
-        newpic = Image(imgname, url, 'bicubicUpscale_' + times + 'x', orginimg.id, current_user.id, -1)
+        if times==3:
+            newpic = Image(imgname, url,ImageType.BICUBIC_UPSCALE_3X , orginimg.id, current_user.id, -1)
+        elif times==2:
+            newpic = Image(imgname, url,ImageType.BICUBIC_UPSCALE_3X , orginimg.id, current_user.id, -1)
         db.session.add(newpic)
         db.session.flush()
         db.session.commit()
@@ -205,12 +223,13 @@ def closecompare():
     imgid = data['imgid']  # bicubicUpscale_2x
     img = Image.query.filter_by(id=imgid).first()
     if img == None:
-        return jsonify(code=200)
-    action = img.action
+        return jsonify(code=201)
     orig_id = img.orig_id
-    img = Image.query.filter_by(orig_id=orig_id, action='bicubic' + action).first()
+    img = Image.query.filter_by(orig_id=orig_id, action=ImageType.BICUBIC_UPSCALE_3X.value).first()
+    if img==None:
+        img = Image.query.filter_by(orig_id=orig_id, action=ImageType.BICUBIC_UPSCALE_2X.value).first()
     if img == None:
-        return jsonify(code=200)
+        return jsonify(code=202)
     else:
         img = Image.query.filter_by(id=img.id).first()
         fdfs_client.delete(img.url[len(fdfs_addr):])

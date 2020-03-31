@@ -11,7 +11,7 @@
             {% for msg in msglist %}
             <li class="list-group-item messageli">
                 {% if msg['head_url'] == None%}
-                <img class="userimg img-circle" src="{{ url_for('static',filename='img/bird_GT.bmp') }}">
+                <img class="userimg img-circle" src="{{ url_for('static',filename='img/kittens.jpg') }}">
                 {% else %}
                 <img class="userimg img-circle" src="{{msg['head_url']}}"/>
                 {% endif%}

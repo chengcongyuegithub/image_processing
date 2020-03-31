@@ -10,6 +10,29 @@ $(document).ready(function () {
     });
     $('#albumupdatemodel').on('shown.bs.modal', function () {
         $('#albumupdatemodel-part').load('/album/updatealbum', {'albumid': albumid}, function () {
+            $('form').bootstrapValidator({
+            　 feedbackIcons: {
+                　　　　　　　　valid: 'glyphicon glyphicon-ok',
+                　　　　　　　　invalid: 'glyphicon glyphicon-remove',
+                　　　　　　　　validating: 'glyphicon glyphicon-refresh'
+            　　　　　　　　   },
+                fields: {
+                    name: {
+                        validators: {
+                            notEmpty: {
+                                message: '相册名不能为空'
+                            }
+                        }
+                    },
+                    introduce: {
+                        validators: {
+                            notEmpty: {
+                                message: '相册介绍不能为空'
+                            }
+                        }
+                    }
+                }
+            });
             $('#updatefrontcover').fileinput({
                 language: 'zh', //设置语言
                 allowedFileExtensions: ['jpg', 'gif', 'png', 'bmp'],
@@ -65,6 +88,29 @@ $(document).ready(function () {
     });
     $('#albumaddmodel').on('shown.bs.modal', function () {
         $('#albumaddmodel-part').load('/album/addalbum', {}, function () {
+            $('form').bootstrapValidator({
+                　feedbackIcons: {
+                    　　　　　　　　valid: 'glyphicon glyphicon-ok',
+                    　　　　　　　　invalid: 'glyphicon glyphicon-remove',
+                    　　　　　　　　validating: 'glyphicon glyphicon-refresh'
+                　　　　　　　　   },
+                fields: {
+                    name: {
+                        validators: {
+                            notEmpty: {
+                                message: '相册名不能为空'
+                            }
+                        }
+                    },
+                    introduce: {
+                        validators: {
+                            notEmpty: {
+                                message: '相册介绍不能为空'
+                            }
+                        }
+                    }
+                }
+            });
             $('#addfrontcover').fileinput({
                 language: 'zh', //设置语言
                 allowedFileExtensions: ['jpg', 'gif', 'png', 'bmp'],

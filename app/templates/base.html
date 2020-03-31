@@ -2,6 +2,7 @@
 {% block styles %}
 {{super()}}
 <link href="{{ url_for('static',filename='css/fileinput.min.css') }}" rel="stylesheet">
+<link href="{{ url_for('static',filename='css/bootstrapValidator.css') }}" rel="stylesheet">
 {% endblock %}
 {% block navbar %}
 <nav class="navbar navbar-inverse">
@@ -29,8 +30,6 @@
                     <li><a href="/user/feed"><span class="glyphicon glyphicon-heart"></span>我的关注</a></li>
                     <li class="divider"></li>
                     <li><a href="/user/message"><span class="glyphicon glyphicon-envelope"></span>私信</a></li>
-                    <li class="divider"></li>
-                    <li><a href="#"><span class="glyphicon glyphicon-asterisk"></span>编辑</a></li>
                     <li class="divider"></li>
                     <li><a href="/user/logout"><span class="glyphicon glyphicon-log-out"></span>退出系统</a></li>
                 </ul>
@@ -69,4 +68,5 @@
 <script type="text/javascript" src="../static/js/fileinput.min.js"></script>
 <script type="text/javascript" src="../static/js/zh.js"></script>
 <script type="text/javascript" src="../static/js/jqthumb.js"></script>
+<script type="text/javascript" src="../static/js/bootstrapValidator.min.js"></script>
 {% endblock %}

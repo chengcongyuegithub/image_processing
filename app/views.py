@@ -31,11 +31,11 @@ def index():
         getAllComment(commentslist, dynamic.id)
         dict['comments'] = commentslist
         rediskey = 'like:' + str(dynamic.id)
-        dict['likecount']=conn.scard(rediskey)
+        dict['likecount'] = conn.scard(rediskey)
         if isinstance(current_user.is_anonymous, bool):
-            dict['likeflag']=False
+            dict['likeflag'] = False
         else:
-            dict['likeflag']=conn.sismember(rediskey,current_user.id)
+            dict['likeflag'] = conn.sismember(rediskey, current_user.id)
         indexlist.append(dict)
     return render_template('index.html', indexlist=indexlist)
 
@@ -73,3 +73,9 @@ def f(id, list, parentname):
 def alert():
     alertcontent = request.values.get('alertmsg')
     return render_template('alert.html', alertcontent=alertcontent)
+
+
+def byte2int(id):
+    id = str(id, encoding="utf-8")
+    id = int(id)
+    return id

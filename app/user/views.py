@@ -1,6 +1,6 @@
 from . import user, login_manager
-from app.models import User, Message, Photoalbum, Dynamic, Image, Feed
-from app.views import getAllComment
+from app.models import User, Message, MessageType, Photoalbum, Dynamic, Image, Feed
+from app.views import getAllComment, byte2int
 from flask import *
 from flask_login import login_user, logout_user, login_required, current_user
 from event.event_queue import fireEvent
@@ -42,10 +42,13 @@ def index():
         else:
             dict['likeflag'] = conn.sismember(rediskey, current_user.id)
         indexlist.append(dict)
-    followercount, followeecount = followerandeecount(str(current_user.id))
-    like = str(likecount(str(current_user.id)), encoding="utf-8")
-    return render_template('user.html', likecount=like, userlist=indexlist,
-                           user=current_user, followercount=followercount, followeecount=followeecount)
+    # 关注和被关注
+    # followercount, followeecount = followerandeecount(str(current_user.id))
+    # 点赞
+    # like = str(likecount(str(current_user.id)), encoding="utf-8")
+    userinfodict = userinfo(str(current_user.id))
+    return render_template('user.html', userlist=indexlist,
+                           user=current_user, userinfodict=userinfodict)
 
 
 @user.route("/follower")
@@ -136,12 +139,11 @@ def otheruser(userid):
         else:
             dict['likeflag'] = conn.sismember(rediskey, current_user.id)
         indexlist.append(dict)
-    followercount, followeecount = followerandeecount(userid)
-    like = str(likecount(userid), encoding="utf-8")
+
+    userinfodict = userinfo(userid)
     # 获得赞数量
-    return render_template('otheruser.html', user=user, likecount=like, msgflag=msgflag, updateflag=True,
-                           followflag=isfollow,
-                           followercount=followercount, followeecount=followeecount, userlist=indexlist)
+    return render_template('otheruser.html', user=user, msgflag=msgflag, updateflag=True,
+                           followflag=isfollow, userinfodict=userinfodict, userlist=indexlist)
 
 
 @user.route("/follower<userid>")
@@ -168,12 +170,14 @@ def otherfollowee(userid):
     return render_template('followee.html', followeelist=list, nameflag=nameflag, username=user.nickname)
 
 
+# 显示修改个人信息的模态框
 @user.route("/updateuser", methods={'get', 'post'})
 @login_required
 def updateuser():
     return render_template('updateuser.html', user=current_user)
 
 
+# 修改个人的信息的请求
 @user.route("/upduser", methods={'get', 'post'})
 @login_required
 def upduser():
@@ -202,8 +206,9 @@ def useralbum():
     for albumid in conn.smembers(rediskey):
         # 字符的b'1'转化为数字
         dict = {}
-        albumid = str(albumid, encoding="utf-8")
-        albumid = int(albumid)
+        # albumid = str(albumid, encoding="utf-8")
+        # albumid = int(albumid)
+        albumid = byte2int(albumid)
         album = Photoalbum.query.filter_by(id=albumid).first()
         dict['id'] = album.id
         dict['name'] = album.name
@@ -211,11 +216,8 @@ def useralbum():
         dict['front_cover'] = album.front_cover
         dict['lookmore'] = False if len(album.introduce) < 7 else True
         albumdictlist.append(dict)
-    followercount, followeecount = followerandeecount(str(current_user.id))
-    like = str(likecount(str(current_user.id)), encoding="utf-8")
-    return render_template('useralbum.html', likecount=like, albumlist=albumdictlist, user=current_user,
-                           followercount=followercount,
-                           followeecount=followeecount)
+    userinfodict = userinfo(str(current_user.id))
+    return render_template('useralbum.html',albumlist=albumdictlist, user=current_user,userinfodict=userinfodict)
 
 
 @user.route('/regloginpage')
@@ -246,9 +248,6 @@ def login():
     dictmsg = dict()
     if next != None and next.startswith('/') > 0:
         dictmsg['next'] = next
-    if username == '' or password == '':
-        dictmsg['login'] = '用户名和密码不能为空'
-        return redirect_with_msg('/user/regloginpage', dictmsg)
     if user == None:
         dictmsg['login'] = '用户名不存在'
         return redirect_with_msg('/user/regloginpage', dictmsg)
@@ -272,9 +271,6 @@ def regist():
     dictmsg = dict()
     if next != None and next.startswith('/') > 0:
         dictmsg['next'] = next
-    if username == '' or password == '':
-        dictmsg['regist'] = '用户名和密码不能为空'
-        return redirect_with_msg('/user/regloginpage', dictmsg)
     if user != None:
         dictmsg['regist'] = '用户名已经存在'
         return redirect_with_msg('/user/regloginpage', dictmsg)
@@ -282,7 +278,7 @@ def regist():
     m = hashlib.md5()
     m.update((password + salt).encode("utf8"))
     password = m.hexdigest()
-    user = User(username, password, salt)
+    user = User(username, password, '没什么感想', salt)
     db.session.add(user)
     db.session.commit()
     login_user(user)
@@ -314,14 +310,16 @@ def islogin():
 @user.route('/message')
 @login_required
 def message():
-    msglist = db.session.query(Message.id, Message.content, Message.createtime, Message.hasRead, User.nickname,
+    # 外连接
+    msglist = db.session.query(Message.id, Message.content, Message.createtime, Message.hasRead, Message.action,
+                               User.nickname,
                                User.head_url).outerjoin(User, Message.fromId == User.id).filter(
         Message.toId == current_user.id).order_by(Message.createtime.desc()).limit(10).all()
     msgdiclist = []
     for msg in msglist:
         dict = {}
         dict['id'] = msg.id
-        if msg.nickname != None:
+        if msg.nickname != None and MessageType(msg.action) == MessageType.TALK:
             dict['content'] = msg.nickname + ' 对我说: ' + msg.content[0:200]
         else:
             dict['content'] = msg.content[0:200]
@@ -338,7 +336,7 @@ def messagedetail():
     message = Message.query.filter_by(id=msgid).first()
     content = ''
     conversationcontentlist = []
-    if message.conversationId == '-1':  # 如果不是对话，则展示当前的长对话
+    if MessageType(message.action) == MessageType.NOTICE:  # 如果不是对话，则展示当前信息的详情
         content = message.content
     else:  # 如果是对话的话，则展示全部的对话信息
         fromId = message.conversationId[0:message.conversationId.find('to')]
@@ -347,7 +345,8 @@ def messagedetail():
             otherUser = User.query.filter_by(id=toId).first()
         else:
             otherUser = User.query.filter_by(id=fromId).first()
-        conversation = Message.query.filter_by(conversationId=message.conversationId).order_by(
+        conversation = Message.query.filter_by(conversationId=message.conversationId,
+                                               action=MessageType.TALK.value).order_by(
             Message.createtime.desc()).all()
         for con in conversation:
             if con.toId == current_user.id:
@@ -357,6 +356,7 @@ def messagedetail():
     return render_template('messagedetail.html', content=content, conversation=conversationcontentlist)
 
 
+# 显示发送私信的模态框
 @user.route('/sendmessage', methods={'get', 'post'})
 @login_required
 def sendmessage():
@@ -364,13 +364,14 @@ def sendmessage():
     return render_template('sendmessage.html', nickname=nickname)
 
 
+# 发送私信的ajax
 @user.route('/sendmsg', methods={'get', 'post'})
 @login_required
 def sendmsg():
     data = json.loads(request.get_data(as_text=True))
     userid = data['userid']
     content = data['content']
-    message = Message(current_user.id, int(userid), content)
+    message = Message(current_user.id, int(userid), content, MessageType.TALK)
     db.session.add(message)
     db.session.commit()
     return jsonify(code=200, message='信息已经发送')
@@ -384,7 +385,6 @@ def isread():
     msg = Message.query.filter_by(id=msgid).first()
     msg.hasRead = 1
     db.session.commit()
-    print(current_user)
     return jsonify(code=200, message='信息已读')
 
 
@@ -392,27 +392,40 @@ def isread():
 @login_required
 def feed():
     feedline = 'feedline:' + str(current_user.id)
-    feedlist=[]
+    feedlist = []
     for feedid in conn.zrange(feedline, 0, sys.maxsize, desc=True, withscores=False, score_cast_func=float):
-        dict={}
+        dict = {}
         feedid = str(feedid, encoding="utf-8")
         feedid = int(feedid)
-        feed=Feed.query.filter_by(id=feedid).first()
-        user=User.query.filter_by(id=feed.userId).first()
-        dict['name']=user.nickname
-        dict['id']=user.id
-        dict['headurl']=user.head_url
-        if feed.type==1:# 动态的话
-            dict['action']='发布了动态'
-        elif feed.type==2: # 关注的其他人
-            dict['action']='关注了别人'
-        elif feed.type==3: # 评论了
-            dict['action']='评论了动态'
-        elif feed.type==4:
-            dict['action']='分享了系统的功能'
-        dict['data']=eval(feed.data)# 字典类型
+        feed = Feed.query.filter_by(id=feedid).first()
+        user = User.query.filter_by(id=feed.userId).first()
+        dict['name'] = user.nickname
+        dict['id'] = user.id
+        dict['headurl'] = user.head_url
+        if feed.type == 1:  # 动态的话
+            dict['action'] = '发布了动态'
+        elif feed.type == 2:  # 关注的其他人
+            dict['action'] = '关注了别人'
+        elif feed.type == 3:  # 评论了
+            dict['action'] = '评论了动态'
+        elif feed.type == 4:
+            dict['action'] = '分享了系统的功能'
+        dict['data'] = eval(feed.data)  # 字典类型
         feedlist.append(dict)
-    return render_template('feed.html',feedlist=feedlist)
+    return render_template('feed.html', feedlist=feedlist)
+
+
+# 个人信息的汇总
+def userinfo(userid):
+    dict = {}
+    # 关注和被关注
+    followercount, followeecount = followerandeecount(userid)
+    # 点赞
+    like = str(likecount(userid),encoding="utf-8")
+    dict['followercount'] = followercount
+    dict['followeecount'] = followeecount
+    dict['like'] = like
+    return dict
 
 
 # 获赞数量
