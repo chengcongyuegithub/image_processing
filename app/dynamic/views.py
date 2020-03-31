@@ -2,10 +2,39 @@ from flask import *
 from flask_login import login_required, current_user
 from . import dynamic
 from app import db, conn
-from app.models import Dynamic, Image, Comment, User
+from app.models import Dynamic, Image, Comment, User,ImageType
+from app.views import getAllComment
 from app import fdfs_client, fdfs_addr
 from event.event_queue import fireEvent
 from event.model import EventType,EventModel,EntityType
+
+@dynamic.route("/<dynamicid>", methods={'get', 'post'})
+@login_required
+def detail(dynamicid):
+    dynamic = Dynamic.query.filter_by(id=dynamicid).order_by(Dynamic.changetime.desc()).first()
+    user=User.query.filter_by(id=dynamic.user_id).first()
+    dict = {}
+    dict['name']=user.nickname
+    dict['headurl']=user.head_url
+    dict['time'] = dynamic.changetime
+    dict['content'] = dynamic.content
+    dict['id'] = dynamic.id
+    imgs = Image.query.filter_by(dynamic_id=dynamic.id).all()
+    imglist = []
+    for img in imgs:
+        imglist.append(img.url)
+    dict['imgs'] = imglist
+    commentslist = []
+    getAllComment(commentslist, dynamic.id)
+    dict['comments'] = commentslist
+    rediskey = 'like:' + str(dynamic.id)
+    dict['likecount'] = conn.scard(rediskey)
+    if isinstance(current_user.is_anonymous, bool):
+        dict['likeflag'] = False
+    else:
+        dict['likeflag'] = conn.sismember(rediskey, current_user.id)
+    return render_template('dynamicdetail.html',dynamic=dict)
+
 
 @dynamic.route("/adddynamic", methods={'get', 'post'})
 @login_required
@@ -23,7 +52,7 @@ def index():
             suffix = filename[filename.find('.') + 1:]
             url = fdfs_addr + fdfs_client.uploadbyBuffer(f, suffix)
             name = url[url.rfind('/') + 1:]
-            img = Image(name, url, 'Origin', -1, current_user.id, dynamic.id)
+            img = Image(name, url,ImageType.ORIGIN,-1, current_user.id, dynamic.id)
             db.session.add(img)
         db.session.commit()
         fireEvent(EventModel(EventType.DYNAMIC, current_user.id, EntityType.DYNAMIC, dynamic.id, current_user.id,

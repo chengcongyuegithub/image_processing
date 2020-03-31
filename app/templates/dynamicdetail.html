@@ -6,8 +6,7 @@
 {% endblock %}
 {% block container%}
 <div class="main">
-    {% for dynamic in indexlist%}
-    <div class="panel panel-default">
+   <div class="panel panel-default">
         <input type="hidden" value="{{dynamic['id']}}">
         <div class="panel-heading">
             <img src="{{dynamic['headurl']}}" class="img-circle head"/>
@@ -15,8 +14,7 @@
             <label class="pull-right time">{{dynamic['time']}}</label>
         </div>
         <div class="panel-body">
-            <div> {{dynamic['content']}} &nbsp;&nbsp;{% if dynamic['flag'] %}<label class="more"><a>全文</a></label>{% endif%}
-            </div>
+            <div> {{dynamic['content']}}</div>
             <div class="row">
                 {% for img in dynamic['imgs'] %}
                 <div class="col-sm-4 col-md-4">
@@ -33,7 +31,6 @@
                 <label class="likelabel">点赞</label>&nbsp;&nbsp;&nbsp;
                 {% endif%}
                 <label class="commentlabel">评论</label>&nbsp;&nbsp;&nbsp;
-                <label class="detaillabel">详情</label>
             </div>
         </div>
         <div class="panel-footer commentpart">
@@ -58,7 +55,6 @@
             </div>
         </div>
     </div>
-    {% endfor %}
 </div>
 {% endblock %}
 {% block scripts %}

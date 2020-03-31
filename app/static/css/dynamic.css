@@ -14,6 +14,6 @@
     position: relative;
     margin: 0px 0px 0px 700px;
 }
-.commentlabel,.likelabel,.updatelabel{
+.commentlabel,.likelabel,.detaillabel{
     cursor:pointer
 }

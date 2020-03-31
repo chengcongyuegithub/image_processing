@@ -2,6 +2,7 @@ from . import image
 from flask import *
 from app import fdfs_client, fdfs_addr, db, conn, cv, tf
 from app.models import Image,ImageType,Photoalbum
+from app.views import byte2int
 from flask_login import current_user
 import time
 import numpy as np
@@ -87,16 +88,16 @@ def upscaling():
     else:
         upscalingimg = Image.query.filter_by(action=ImageType.UPSCALE_3X.value, orig_id=imgid).first()
     if upscalingimg != None:
-        return jsonify(code=401, message='此图片已经优化过,请在该相册中查找')
+        return jsonify(code=400, message='此图片已经优化过,请在该相册中查找')
     img = Image.query.filter_by(id=imgid).first()
     suffix = img.name[img.name.find('.') + 1:]
     imgContent = fdfs_client.downloadbyBuffer(img.url[len(fdfs_addr):])
     img = cv.imdecode(np.frombuffer(imgContent, np.uint8), cv.IMREAD_COLOR)
     print(img.shape)
     if time=='3x' and (img.shape[0] > 500 or img.shape[1] > 500):
-        return jsonify(code=402, message='该图片尺寸较大，将无法执行放大操作，请选择其他操作')
+        return jsonify(code=400, message='该图片尺寸较大，将无法执行放大操作，请选择其他操作')
     if time=='2x' and (img.shape[0] > 800 or img.shape[1] > 800):
-        return jsonify(code=402, message='该图片尺寸较大，将无法执行放大操作，请选择其他操作')
+        return jsonify(code=400, message='该图片尺寸较大，将无法执行放大操作，请选择其他操作')
     # 丢给线程池
     if time == '3x':
         fireEvent(EventModel(EventType.TASK, current_user.id, EntityType.IMAGE, imgid, current_user.id,
@@ -120,15 +121,15 @@ def superresolution():
         srcnnimg = Image.query.filter_by(id=imgid).first()
         if ImageType(srcnnimg.action)!=ImageType.ORIGIN:
             return jsonify(code=400, message='此图片为处理过的图片，请选择其他功能')
-        srcnnimg = Image.query.filter_by(action=ImageType.ORIGIN.value, orig_id=imgid).first()
+        srcnnimg = Image.query.filter_by(action=ImageType.SRCNN.value, orig_id=imgid).first()
         if srcnnimg != None:
-            return jsonify(code=401, message='此图片已经优化过,请在该相册中查找')
+            return jsonify(code=400, message='此图片已经优化过,请在该相册中查找')
         img = Image.query.filter_by(id=imgid).first()
         suffix = img.name[img.name.find('.') + 1:]
         imgContent = fdfs_client.downloadbyBuffer(img.url[len(fdfs_addr):])
         img = cv.imdecode(np.frombuffer(imgContent, np.uint8), cv.IMREAD_COLOR)
         if img.shape[0] > 1500 or img.shape[1] > 1500:
-            return jsonify(code=402, message='该图片尺寸较大,执行该操作会导致内存泄漏')
+            return jsonify(code=400, message='该图片尺寸较大,执行该操作会导致内存泄漏')
         if img.shape[0] > 900 or img.shape[1] > 900:  # 大型任务，交给线程池处理
             fireEvent(EventModel(EventType.TASK, current_user.id, EntityType.IMAGE, imgid, current_user.id,
                                  {'task': 'srcnn_process', 'action': ImageType.SRCNN.value, 'suffix': suffix,
@@ -164,8 +165,7 @@ def superresolution():
         albumdictlist = []
         for albumid in conn.smembers(rediskey):
             dict = {}
-            albumid = str(albumid, encoding="utf-8")
-            albumid = int(albumid)
+            albumid=byte2int(albumid)
             album = Photoalbum.query.filter_by(id=albumid).first()
             dict['id'] = album.id
             dict['name'] = album.name

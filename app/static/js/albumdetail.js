@@ -62,12 +62,12 @@ $(document).ready(function () {
                         }
                         else
                         {
-                            if(res['code']=='201')//禁用
+                            if(res['code']=='201')
                             {
                                 $('.superresolutionbtn').attr('disabled','disabled');
                             }
-                            $('.alert-danger').removeClass('hide').addClass('in');
-                            $('.alert-danger strong').text(res['message']);
+                            alertmsg=res['message'];
+                            $('#alertmodel').modal('show');
                         }
                     }
                   });
@@ -92,8 +92,11 @@ $(document).ready(function () {
                         $('.upscalingbtn button').attr('disabled','disabled');
     	            },
                     success: function (res) {
-                         $('.alert-danger').removeClass('hide').addClass('in');
-                         $('.alert-danger strong').text(res['message']);
+                        if(res['code']=='400')
+                        {
+                            alertmsg=res['message'];
+                            $('#alertmodel').modal('show');
+                        }
                     }
                   });
              });

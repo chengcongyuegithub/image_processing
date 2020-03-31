@@ -1,3 +1,4 @@
+var alertmsg;
 $(document).ready(function(){
     $('.basebtn').click(function () {
         var id=$(this).attr('id');
@@ -43,6 +44,12 @@ $(document).ready(function(){
                             albumid:albumid
                         }),
                         success: function (msg) {
+                            if(msg['imglist'].length==0)
+                            {
+                                var newdiv='<div>&nbsp;&nbsp;&nbsp;<label>没有需要处理的图片</label></div>';
+                                $('.baseimg').append(newdiv);
+                                return ;
+                            }
                             $('.baseimg').empty();
                             var newidv='';
                             for (i = 0; i < msg['imglist'].length; i++) {
@@ -61,8 +68,10 @@ $(document).ready(function(){
              $('.basesuperbtn').click(function () {
                    if(typeof(baseimgid) == "undefined")
                    {
-                        $('#baseAlert').removeClass('hide').addClass('in');
-                        $('#baseAlert strong').text('请选择处理的图片');
+                        //$('#baseAlert').removeClass('hide').addClass('in');
+                        //$('#baseAlert strong').text('请选择处理的图片');
+                        alertmsg='请选择处理的图片';
+                        $('#alertmodel').modal('show');
                         return ;
                    }
                     $.ajax({
@@ -83,12 +92,15 @@ $(document).ready(function(){
                         },
                         success: function (res) {
                             $('.basesuperbtn').removeAttr("disabled");
-                            $('#baseAlert').removeClass('hide').addClass('in');
-                            $('#baseAlert strong').text(res['message']);
+                            alertmsg=res['message'];
+                            $('#alertmodel').modal('show');
                         }
                    });
              });
          });
+     });
+     $('#alertmodel').on('shown.bs.modal', function() {
+          $('#alertmodel-part').load('/alert',{alertmsg:alertmsg});
      });
     $('#baseuploadermodel').on('shown.bs.modal', function() {
           $('#baseuploadermodel-part').load('/image/uploader',function(){

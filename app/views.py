@@ -10,7 +10,10 @@ def index():
     dynamiclist = Dynamic.query.order_by(Dynamic.changetime.desc()).all()
     indexlist = []
     for dynamic in dynamiclist:
+        user = User.query.filter_by(id=dynamic.user_id).first()
         dict = {}
+        dict['name'] = user.nickname
+        dict['headurl'] = user.head_url
         dict['time'] = dynamic.changetime
         if len(dynamic.content) > 200:
             dict['flag'] = True
@@ -22,10 +25,6 @@ def index():
         imglist = []
         for img in imgs:
             imglist.append(img.url)
-            if dict.__contains__('name') == False:
-                user = User.query.filter_by(id=img.user_id).first()
-                dict['name'] = user.nickname
-                dict['headurl'] = user.head_url
         dict['imgs'] = imglist
         commentslist = []
         getAllComment(commentslist, dynamic.id)

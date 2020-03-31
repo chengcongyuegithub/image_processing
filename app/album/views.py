@@ -1,7 +1,7 @@
 from flask import *
 from flask_login import login_required, current_user
 from . import album
-from app.models import Photoalbum, Image
+from app.models import Photoalbum, Image,ImageType
 from app import fdfs_client, fdfs_addr, db, conn
 from app.views import byte2int
 from event.event_queue import fireEvent
@@ -34,7 +34,7 @@ def ajaxdetail():
         dict={}
         imgid = byte2int(imgid)
         img = Image.query.filter_by(id=imgid).first()
-        if img.action=='Origin':
+        if ImageType(img.action)==ImageType.ORIGIN:
             proimg = Image.query.filter_by(orig_id=imgid).first()
             if proimg!=None: continue;
             dict['url']=img.url
