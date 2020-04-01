@@ -44,13 +44,13 @@ $(document).ready(function(){
                             albumid:albumid
                         }),
                         success: function (msg) {
+                            $('.baseimg').empty();
                             if(msg['imglist'].length==0)
                             {
                                 var newdiv='<div>&nbsp;&nbsp;&nbsp;<label>没有需要处理的图片</label></div>';
                                 $('.baseimg').append(newdiv);
                                 return ;
                             }
-                            $('.baseimg').empty();
                             var newidv='';
                             for (i = 0; i < msg['imglist'].length; i++) {
                                newidv+='<div class="col-sm-6 col-md-2"><a href="#" class="thumbnail">' +

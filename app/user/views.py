@@ -1,6 +1,6 @@
 from . import user, login_manager
 from app.models import User, Message, MessageType, Photoalbum, Dynamic, Image, Feed
-from app.views import getAllComment, byte2int
+from app.views import getAllComment, byte2int, showdynamic
 from flask import *
 from flask_login import login_user, logout_user, login_required, current_user
 from event.event_queue import fireEvent
@@ -19,33 +19,8 @@ def index():
     dynamiclist = Dynamic.query.filter_by(user_id=current_user.id).order_by(Dynamic.changetime.desc()).all()
     indexlist = []
     for dynamic in dynamiclist:
-        dict = {}
-        dict['time'] = dynamic.changetime
-        if len(dynamic.content) > 200:
-            dict['flag'] = True
-        else:
-            dict['flag'] = False
-        dict['content'] = dynamic.content[0:200]
-        dict['id'] = dynamic.id
-        imgs = Image.query.filter_by(dynamic_id=dynamic.id).all()
-        imglist = []
-        for img in imgs:
-            imglist.append(img.url)
-        dict['imgs'] = imglist
-        commentslist = []
-        getAllComment(commentslist, dynamic.id)
-        dict['comments'] = commentslist
-        rediskey = 'like:' + str(dynamic.id)
-        dict['likecount'] = conn.scard(rediskey)
-        if isinstance(current_user.is_anonymous, bool):
-            dict['likeflag'] = False
-        else:
-            dict['likeflag'] = conn.sismember(rediskey, current_user.id)
+        dict = showdynamic(dynamic, False)
         indexlist.append(dict)
-    # 关注和被关注
-    # followercount, followeecount = followerandeecount(str(current_user.id))
-    # 点赞
-    # like = str(likecount(str(current_user.id)), encoding="utf-8")
     userinfodict = userinfo(str(current_user.id))
     return render_template('user.html', userlist=indexlist,
                            user=current_user, userinfodict=userinfodict)
@@ -76,8 +51,7 @@ def follow():
     conn.zadd(followerkey, {current_user.id: time.time()})
     conn.zadd(followeekey, {userid: time.time()})
     # 发送私信
-    fireEvent(
-        EventModel(EventType.FOLLOW, current_user.id, EntityType.USER, userid, userid, {'name': current_user.nickname}))
+    fireEvent(EventModel(EventType.FOLLOW, current_user.id, EntityType.USER, userid, userid, {'name': current_user.nickname,'detail':'/user/'+userid}))
     return jsonify(code=200)
 
 
@@ -116,30 +90,8 @@ def otheruser(userid):
     dynamiclist = Dynamic.query.filter_by(user_id=userid).order_by(Dynamic.changetime.desc()).all()
     indexlist = []
     for dynamic in dynamiclist:
-        dict = {}
-        dict['time'] = dynamic.changetime
-        if len(dynamic.content) > 200:
-            dict['flag'] = True
-        else:
-            dict['flag'] = False
-        dict['content'] = dynamic.content[0:200]
-        dict['id'] = dynamic.id
-        imgs = Image.query.filter_by(dynamic_id=dynamic.id).all()
-        imglist = []
-        for img in imgs:
-            imglist.append(img.url)
-        dict['imgs'] = imglist
-        commentslist = []
-        getAllComment(commentslist, dynamic.id)
-        dict['comments'] = commentslist
-        rediskey = 'like:' + str(dynamic.id)
-        dict['likecount'] = conn.scard(rediskey)
-        if isinstance(current_user.is_anonymous, bool):
-            dict['likeflag'] = False
-        else:
-            dict['likeflag'] = conn.sismember(rediskey, current_user.id)
+        dict=showdynamic(dynamic,False)
         indexlist.append(dict)
-
     userinfodict = userinfo(userid)
     # 获得赞数量
     return render_template('otheruser.html', user=user, msgflag=msgflag, updateflag=True,
@@ -395,23 +347,21 @@ def feed():
     feedlist = []
     for feedid in conn.zrange(feedline, 0, sys.maxsize, desc=True, withscores=False, score_cast_func=float):
         dict = {}
-        # feedid = str(feedid, encoding="utf-8")
-        # feedid = int(feedid)
         feedid = byte2int(feedid)
         feed = Feed.query.filter_by(id=feedid).first()
         user = User.query.filter_by(id=feed.userId).first()
         dict['name'] = user.nickname
         dict['id'] = user.id
         dict['headurl'] = user.head_url
-        if EventType(feed.type) ==EventType.DYNAMIC :  # 动态的话
+        if EventType(feed.type) == EventType.DYNAMIC:  # 动态的话
             dict['action'] = '发布了动态'
-        elif EventType(feed.type) ==EventType.FOLLOW:  # 关注的其他人
+        elif EventType(feed.type) == EventType.FOLLOW:  # 关注的其他人
             dict['action'] = '关注了别人'
-        elif EventType(feed.type) ==EventType.COMMENT:  # 评论了
+        elif EventType(feed.type) == EventType.COMMENT:  # 评论了
             dict['action'] = '评论了动态'
-        elif EventType(feed.type) ==EventType.SHARE:
+        elif EventType(feed.type) == EventType.SHARE:  # 分享了图片功能
             dict['action'] = '分享了系统的功能'
-        dict['data'] = eval(feed.data)['dynamicdetail']  # 字典类型
+        dict['data'] = eval(feed.data)['detail']  # 字典类型
         feedlist.append(dict)
     return render_template('feed.html', feedlist=feedlist)
 

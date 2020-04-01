@@ -132,7 +132,7 @@ class Comment(db.Model):
     def __init__(self, content, entityOwnerId, entityType, entityId):
         self.content = content
         self.entityOwnerId = entityOwnerId
-        self.entityType = entityType
+        self.entityType = entityType.value
         self.entityId = entityId
         self.changetime = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
 

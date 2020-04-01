@@ -42,13 +42,13 @@ def detail(dynamicid):
 def index():
     if request.method == 'POST':
         content = request.values.get('dynamiccontent').strip()
-        imgid=request.values.get('imgid')
+        imgid = request.values.get('imgid')
         compareimgid = request.values.get('compareimgid')
         dynamic = Dynamic(content, current_user.id)
         db.session.add(dynamic)
         db.session.flush()
         db.session.commit()
-        if imgid==None:
+        if imgid == None:
             files = request.files.getlist('dynamicimg')
             for f in files:
                 filename = f.filename
@@ -60,30 +60,35 @@ def index():
                 db.session.add(img)
             db.session.commit()
             fireEvent(EventModel(EventType.DYNAMIC, current_user.id, EntityType.DYNAMIC, dynamic.id, current_user.id,
-                                 {'dynamicdetail': '/dynamic/'+str(dynamic.id)}))
+                                 {'detail': '/dynamic/' + str(dynamic.id)}))
         else:
-            img=Image.query.filter_by(id=imgid).first()
-            compareimg=Image.query.filter_by(id=compareimgid).first()
-            img.dynamic_id=dynamic.id
+            img = Image.query.filter_by(id=imgid).first()
+            compareimg = Image.query.filter_by(id=compareimgid).first()
+            img.dynamic_id = dynamic.id
             compareimg.dynamic_id = dynamic.id
             db.session.commit()
             fireEvent(EventModel(EventType.SHARE, current_user.id, EntityType.DYNAMIC, dynamic.id, current_user.id,
-                                 {'dynamicdetail': '/dynamic/'+str(dynamic.id)}))
+                                 {'detail': '/dynamic/' + str(dynamic.id)}))
         return redirect('/')
     else:
         imgid = request.args.get('imgid')
         if imgid == None:
             return render_template('adddynamic.html')
         else:
-            img = Image.query.filter_by(id=imgid).first()# 处理之后的图片
+            content = ''
+            img = Image.query.filter_by(id=imgid).first()  # 处理之后的图片
             if ImageType(img.action) == ImageType.SRCNN:
-                compareimg = Image.query.filter_by(id=img.orig_id).first()# 原图
+                compareimg = Image.query.filter_by(id=img.orig_id).first()  # 原图
+                content = '原图和系统处理过之后的图片比较'
             elif ImageType(img.action) == ImageType.UPSCALE_2X:
-                compareimg = Image.query.filter_by(orig_id=img.orig_id, action=ImageType.BICUBIC_UPSCALE_2X.value).first()
+                compareimg = Image.query.filter_by(orig_id=img.orig_id,
+                                                   action=ImageType.BICUBIC_UPSCALE_2X.value).first()
+                content = '传统的2x处理和系统SRCNN的2x处理的图片比较'
             elif ImageType(img.action) == ImageType.UPSCALE_3X:
-                compareimg = Image.query.filter_by(orig_id=img.orig_id, action=ImageType.BICUBIC_UPSCALE_3X.value).first()
-
-            return render_template('adddynamic.html', img=img,compareimg=compareimg)
+                compareimg = Image.query.filter_by(orig_id=img.orig_id,
+                                                   action=ImageType.BICUBIC_UPSCALE_3X.value).first()
+                content = '传统的3x处理和系统SRCNN的3x处理的图片比较'
+            return render_template('adddynamic.html', img=img, compareimg=compareimg, content=content)
 
 
 @dynamic.route("/more", methods={'get', 'post'})
@@ -92,6 +97,13 @@ def more():
     id = data['id']
     dynamic = Dynamic.query.filter_by(id=id).first()
     return jsonify(code=200, content=dynamic.content)
+
+@dynamic.route("/packup", methods={'get', 'post'})
+def packup():
+    data = json.loads(request.get_data(as_text=True))
+    id = data['id']
+    dynamic = Dynamic.query.filter_by(id=id).first()
+    return jsonify(code=200, content=dynamic.content[0:200])
 
 
 @dynamic.route("/comment", methods={'get', 'post'})
@@ -104,17 +116,19 @@ def comment():
     content = data['content']
     userid = data['userid']
     if type == 'dynamic':
-        comment = Comment(content, current_user.id, 2, id)
+        comment = Comment(content, current_user.id, EntityType.DYNAMIC, id)
         db.session.add(comment)
         db.session.flush()
         db.session.commit()
+        fireEvent(EventModel(EventType.COMMENT, current_user.id, EntityType.DYNAMIC, id, userid,
+                             { 'detail': '/dynamic/' + id}))
         return jsonify(code=200, username=current_user.nickname, userid=current_user.id, content=content,
                        commentid=comment.id)
     else:
         if int(userid) == current_user.id:
             return jsonify(code=400, message='用户不能回复自己')
         actoruser = User.query.filter_by(id=userid).first()
-        comment = Comment(content, current_user.id, 3, id)
+        comment = Comment(content, current_user.id, EntityType.COMMENT, id)
         db.session.add(comment)
         db.session.commit()
         return jsonify(code=201, username=current_user.nickname, userid=current_user.id, content=content,

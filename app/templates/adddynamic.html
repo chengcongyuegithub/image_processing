@@ -19,11 +19,11 @@
                 {% endif%}
                 <div class="form-group">
                     <label>动态内容</label>
-                    <textarea class="form-control" name="dynamiccontent" rows="3"></textarea>
+                    <textarea class="form-control" name="dynamiccontent" rows="3">{% if img %}{{content}}{% endif%}</textarea>
                 </div>
                 <div class="form-group">
                     <label>选择图片(最多可选三张图片)</label>
-                    <input type="file" name="dynamicimg" id="dynamicimg" multiple />
+                    <input type="file" name="dynamicimg" id="dynamicimg" multiple  {% if img %} disabled {% endif%}/>
                 </div>
                 <div class="form-group">
                     <button type="submit" class="btn btn-default btn-warning">发布</button>&nbsp;&nbsp;&nbsp;

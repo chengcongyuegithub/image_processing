@@ -65,7 +65,7 @@ class RegistEventHandler(EventHandler):
 
 class FeedEventHandler(EventHandler):
     def __init__(self):
-        print('RegistEventHandler被创建了')
+        print('FeedEventHandler被创建了')
 
     def dohandler(self, eventModel):
         followerkey = 'follower:1:' + str(eventModel.actorId)

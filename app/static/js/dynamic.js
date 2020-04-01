@@ -13,9 +13,14 @@ $(document).ready(function () {
     });
 
     $('.commentbtn').click(function () {
-         var dynamicid = $(this).parent().parent().parent().children('input[type=hidden]').val();
          var input = $(this).parent().children('input');
          var content=input.val();
+         if(content==''){
+             alertmsg='评论不能为空';
+             $('#alertmodel').modal('show');
+             return ;
+         }
+         var dynamicid = $(this).parent().parent().parent().children('input[type=hidden]').val();
          var li = $(this).parent().prev();
          $.ajax({
              url: '/dynamic/comment',
@@ -100,7 +105,7 @@ $(document).ready(function () {
         //获得焦点
         $(this).parent().parent().next().children('div').children('input')[0].focus();
      });
-     $('.more').click(function(){
+      $('.panel-body').on('click','.more',function(){
          var contentdiv=$(this).parent();
          var dynamicid = $(this).parent().parent().parent().children('input[type=hidden]').val();
          $.ajax({
@@ -118,10 +123,37 @@ $(document).ready(function () {
                  if(res['code']=='200')
                  {
                      contentdiv.text(res['content']);
+                     var newbtn='&nbsp;&nbsp;<label class="packup"><a>收起</a></label>';
+                     contentdiv.append(newbtn);
                  }
              }
          });
      });
+     $('.panel-body').on('click','.packup',function(){
+         var contentdiv=$(this).parent();
+         var dynamicid = $(this).parent().parent().parent().children('input[type=hidden]').val();
+         $.ajax({
+             url: '/dynamic/packup',
+             type: 'post',
+             dataType: 'json',
+             data: JSON.stringify({
+                 id: dynamicid
+             }),
+             headers: {
+             "Content-Type": "application/json;charset=utf-8"
+             },
+             contentType: 'application/json; charset=utf-8',
+             success: function (res) {
+                 if(res['code']=='200')
+                 {
+                     contentdiv.text(res['content']);
+                     var newbtn='&nbsp;&nbsp;<label class="more"><a>全文</a></label>';
+                     contentdiv.append(newbtn);
+                 }
+             }
+         });
+     });
+
      var currentuserid=$('#username').children('input[type=hidden]').val();
      $('.commentpart').on('mouseover','.commentli',function(){
           var userid=$(this).children().children('a').attr('id');

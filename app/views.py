@@ -1,6 +1,6 @@
 from flask import *
-from app import app, db, conn
-from .models import Dynamic, Image, User, Comment
+from app import app,conn
+from .models import Dynamic, Image, ImageType, User, Comment
 from flask_login import current_user
 
 
@@ -10,34 +10,44 @@ def index():
     dynamiclist = Dynamic.query.order_by(Dynamic.changetime.desc()).all()
     indexlist = []
     for dynamic in dynamiclist:
-        user = User.query.filter_by(id=dynamic.user_id).first()
-        dict = {}
-        dict['name'] = user.nickname
-        dict['headurl'] = user.head_url
-        dict['time'] = dynamic.changetime
-        if len(dynamic.content) > 200:
-            dict['flag'] = True
-        else:
-            dict['flag'] = False
-        dict['content'] = dynamic.content[0:200]
-        dict['id'] = dynamic.id
-        imgs = Image.query.filter_by(dynamic_id=dynamic.id).all()
-        imglist = []
-        for img in imgs:
-            imglist.append(img.url)
-        dict['imgs'] = imglist
-        commentslist = []
-        getAllComment(commentslist, dynamic.id)
-        dict['comments'] = commentslist
-        rediskey = 'like:' + str(dynamic.id)
-        dict['likecount'] = conn.scard(rediskey)
-        if isinstance(current_user.is_anonymous, bool):
-            dict['likeflag'] = False
-        else:
-            dict['likeflag'] = conn.sismember(rediskey, current_user.id)
+        dict=showdynamic(dynamic,True)
         indexlist.append(dict)
     return render_template('index.html', indexlist=indexlist)
 
+def showdynamic(dynamic,isshowuser):
+    dict = {}
+    if(isshowuser):
+        user = User.query.filter_by(id=dynamic.user_id).first()
+        dict['userid']=user.id
+        dict['name'] = user.nickname
+        dict['headurl'] = user.head_url
+    dict['time'] = dynamic.changetime
+    if len(dynamic.content) > 200:
+        dict['flag'] = True
+    else:
+        dict['flag'] = False
+    dict['content'] = dynamic.content[0:200]
+    dict['id'] = dynamic.id
+    imgs = Image.query.filter_by(dynamic_id=dynamic.id).all()
+    imglist = []
+    if len(imgs) == 2 and (ImageType(imgs[0].action) == ImageType.UPSCALE_2X or ImageType(
+            imgs[0].action) == ImageType.UPSCALE_3X):
+        imglist.append(imgs[1].url)
+        imglist.append(imgs[0].url)
+    else:
+        for img in imgs:
+            imglist.append(img.url)
+    dict['imgs'] = imglist
+    commentslist = []
+    getAllComment(commentslist, dynamic.id)
+    dict['comments'] = commentslist
+    rediskey = 'like:' + str(dynamic.id)
+    dict['likecount'] = conn.scard(rediskey)
+    if isinstance(current_user.is_anonymous, bool):
+        dict['likeflag'] = False
+    else:
+        dict['likeflag'] = conn.sismember(rediskey, current_user.id)
+    return dict
 
 def getAllComment(commentslist, id):
     comments = Comment.query.filter_by(entityType=2, entityId=id).all()
@@ -78,4 +88,3 @@ def byte2int(id):
     id = str(id, encoding="utf-8")
     id = int(id)
     return id
-

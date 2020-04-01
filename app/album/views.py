@@ -73,8 +73,7 @@ def updatealb():
             url = fdfs_addr + fdfs_client.uploadbyBuffer(f, suffix)
             album.front_cover = url
         db.session.commit()
-        fireEvent(EventModel(EventType.ALBUM, -1, EntityType.USER, album.id, current_user.id,
-                             {'orginlname': orginlname, 'action': '修改'}))
+        #fireEvent(EventModel(EventType.ALBUM, -1, EntityType.USER, album.id, current_user.id,{'orginlname': orginlname, 'action': '修改'}))
 
     return redirect('/user/useralbum')
 
@@ -108,8 +107,7 @@ def addalb():
         rediskey = 'useralbum:' + str(current_user.id)
         conn.sadd(rediskey, photoalbum.id)
         # 给用户发私信
-        fireEvent(EventModel(EventType.ALBUM, -1, EntityType.USER, photoalbum.id, current_user.id,
-                             {'orginlname': name, 'action': '新建'}))
+        # fireEvent(EventModel(EventType.ALBUM, -1, EntityType.USER, photoalbum.id, current_user.id,{'orginlname': name, 'action': '新建'}))
     return redirect('/user/useralbum')
 
 
@@ -123,6 +121,5 @@ def delete():
     rediskey = 'useralbum:' + str(current_user.id)
     conn.srem(rediskey, albumid)
     # 删除内容----异步
-    fireEvent(EventModel(EventType.TASK, current_user.id, EntityType.ALBUM, albumid, current_user.id,
-                         {'task': 'deleteinbatch', 'orginlname': name, 'action': '删除'}))
+    # fireEvent(EventModel(EventType.TASK, current_user.id, EntityType.ALBUM, albumid, current_user.id,{'task': 'deleteinbatch', 'orginlname': name, 'action': '删除'}))
     return jsonify(code=200)
