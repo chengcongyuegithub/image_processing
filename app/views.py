@@ -78,3 +78,4 @@ def byte2int(id):
     id = str(id, encoding="utf-8")
     id = int(id)
     return id
+

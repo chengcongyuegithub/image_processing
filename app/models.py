@@ -193,7 +193,7 @@ class Feed(db.Model):
     data = db.Column(db.String(100))# 转成json的字典类型
 
     def __init__(self, type, userId, data):
-        self.type = type
+        self.type = type.value
         self.userId = userId
         self.data = data
         self.createtime = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())

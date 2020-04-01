@@ -69,7 +69,7 @@ class FeedEventHandler(EventHandler):
 
     def dohandler(self, eventModel):
         followerkey = 'follower:1:' + str(eventModel.actorId)
-        feed=Feed(1,eventModel.actorId,json.dumps(eventModel.dict))
+        feed=Feed(eventModel.eventType,eventModel.actorId,json.dumps(eventModel.dict))
         db.session.add(feed)
         db.session.flush()
         db.session.commit()
@@ -79,9 +79,6 @@ class FeedEventHandler(EventHandler):
             user = User.query.filter_by(id=userid).first()
             feedline='feedline:'+str(user.id)
             conn.zadd(feedline, {feed.id: time.time()})
-
-    # print(eventModel)
-
     def getSupportEventTypes(self):
         return [EventType.COMMENT, EventType.DYNAMIC, EventType.FOLLOW, EventType.SHARE]
 

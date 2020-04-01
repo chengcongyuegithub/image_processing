@@ -1,4 +1,6 @@
 $(document).ready(function () {
+    var imgurl=$('#img').val();
+    var compareurl=$('#compareimg').val();
     //添加
     $('#dynamicimg').fileinput({
                 language: 'zh', //设置语言
@@ -6,6 +8,9 @@ $(document).ready(function () {
                 showCaption: false,
                 showUpload: false,
                 overwriteInitial: false,
+                initialPreview: [
+                    imgurl,compareurl
+                ],
                 initialPreviewAsData: true,
                 browseClass: "btn btn-success",
                 maxFileCount: 3,

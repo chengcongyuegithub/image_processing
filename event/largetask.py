@@ -40,6 +40,7 @@ def srcnn_process(imgid, albumid, userid, action, times=1):
             img = srcnn.superresolution(img)
         else:
             print('放大处理')
+            print(int(times[0:1]))
             img = srcnn.upscaling(img, int(times[0:1]), True)
     img = Img.fromarray(img)
     f = BytesIO()

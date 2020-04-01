@@ -6,9 +6,17 @@
 {% endblock %}
 {% block container%}
 <div class="main">
+    {% if img %}
+    <input id='img' type="hidden" value="{{img.url}}">
+    <input id='compareimg' type="hidden" value="{{compareimg.url}}">
+    {% endif%}
     <div class="panel panel-default adddynamic">
         <div class="panel-body">
              <form role="form" action="/dynamic/adddynamic" method="post" enctype="multipart/form-data">
+                {% if img %}
+                <input name="imgid" type="hidden" value="{{img.id}}">
+                <input name="compareimgid" type="hidden" value="{{compareimg.id}}">
+                {% endif%}
                 <div class="form-group">
                     <label>动态内容</label>
                     <textarea class="form-control" name="dynamiccontent" rows="3"></textarea>

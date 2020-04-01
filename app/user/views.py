@@ -217,7 +217,7 @@ def useralbum():
         dict['lookmore'] = False if len(album.introduce) < 7 else True
         albumdictlist.append(dict)
     userinfodict = userinfo(str(current_user.id))
-    return render_template('useralbum.html',albumlist=albumdictlist, user=current_user,userinfodict=userinfodict)
+    return render_template('useralbum.html', albumlist=albumdictlist, user=current_user, userinfodict=userinfodict)
 
 
 @user.route('/regloginpage')
@@ -395,22 +395,23 @@ def feed():
     feedlist = []
     for feedid in conn.zrange(feedline, 0, sys.maxsize, desc=True, withscores=False, score_cast_func=float):
         dict = {}
-        feedid = str(feedid, encoding="utf-8")
-        feedid = int(feedid)
+        # feedid = str(feedid, encoding="utf-8")
+        # feedid = int(feedid)
+        feedid = byte2int(feedid)
         feed = Feed.query.filter_by(id=feedid).first()
         user = User.query.filter_by(id=feed.userId).first()
         dict['name'] = user.nickname
         dict['id'] = user.id
         dict['headurl'] = user.head_url
-        if feed.type == 1:  # 动态的话
+        if EventType(feed.type) ==EventType.DYNAMIC :  # 动态的话
             dict['action'] = '发布了动态'
-        elif feed.type == 2:  # 关注的其他人
+        elif EventType(feed.type) ==EventType.FOLLOW:  # 关注的其他人
             dict['action'] = '关注了别人'
-        elif feed.type == 3:  # 评论了
+        elif EventType(feed.type) ==EventType.COMMENT:  # 评论了
             dict['action'] = '评论了动态'
-        elif feed.type == 4:
+        elif EventType(feed.type) ==EventType.SHARE:
             dict['action'] = '分享了系统的功能'
-        dict['data'] = eval(feed.data)  # 字典类型
+        dict['data'] = eval(feed.data)['dynamicdetail']  # 字典类型
         feedlist.append(dict)
     return render_template('feed.html', feedlist=feedlist)
 
@@ -421,7 +422,7 @@ def userinfo(userid):
     # 关注和被关注
     followercount, followeecount = followerandeecount(userid)
     # 点赞
-    like = str(likecount(userid),encoding="utf-8")
+    like = str(likecount(userid), encoding="utf-8")
     dict['followercount'] = followercount
     dict['followeecount'] = followeecount
     dict['like'] = like

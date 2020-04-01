@@ -2,20 +2,21 @@ from flask import *
 from flask_login import login_required, current_user
 from . import dynamic
 from app import db, conn
-from app.models import Dynamic, Image, Comment, User,ImageType
+from app.models import Dynamic, Image, Comment, User, ImageType
 from app.views import getAllComment
 from app import fdfs_client, fdfs_addr
 from event.event_queue import fireEvent
-from event.model import EventType,EventModel,EntityType
+from event.model import EventType, EventModel, EntityType
+
 
 @dynamic.route("/<dynamicid>", methods={'get', 'post'})
 @login_required
 def detail(dynamicid):
     dynamic = Dynamic.query.filter_by(id=dynamicid).order_by(Dynamic.changetime.desc()).first()
-    user=User.query.filter_by(id=dynamic.user_id).first()
+    user = User.query.filter_by(id=dynamic.user_id).first()
     dict = {}
-    dict['name']=user.nickname
-    dict['headurl']=user.head_url
+    dict['name'] = user.nickname
+    dict['headurl'] = user.head_url
     dict['time'] = dynamic.changetime
     dict['content'] = dynamic.content
     dict['id'] = dynamic.id
@@ -33,7 +34,7 @@ def detail(dynamicid):
         dict['likeflag'] = False
     else:
         dict['likeflag'] = conn.sismember(rediskey, current_user.id)
-    return render_template('dynamicdetail.html',dynamic=dict)
+    return render_template('dynamicdetail.html', dynamic=dict)
 
 
 @dynamic.route("/adddynamic", methods={'get', 'post'})
@@ -41,25 +42,48 @@ def detail(dynamicid):
 def index():
     if request.method == 'POST':
         content = request.values.get('dynamiccontent').strip()
-        dynamic = Dynamic(content,current_user.id)
+        imgid=request.values.get('imgid')
+        compareimgid = request.values.get('compareimgid')
+        dynamic = Dynamic(content, current_user.id)
         db.session.add(dynamic)
         db.session.flush()
         db.session.commit()
-        files = request.files.getlist('dynamicimg')
-        for f in files:
-            filename = f.filename
-            f = f.read()
-            suffix = filename[filename.find('.') + 1:]
-            url = fdfs_addr + fdfs_client.uploadbyBuffer(f, suffix)
-            name = url[url.rfind('/') + 1:]
-            img = Image(name, url,ImageType.ORIGIN,-1, current_user.id, dynamic.id)
-            db.session.add(img)
-        db.session.commit()
-        fireEvent(EventModel(EventType.DYNAMIC, current_user.id, EntityType.DYNAMIC, dynamic.id, current_user.id,
-                             {'dynamicdetail': 'www.baidu.com'}))
+        if imgid==None:
+            files = request.files.getlist('dynamicimg')
+            for f in files:
+                filename = f.filename
+                f = f.read()
+                suffix = filename[filename.find('.') + 1:]
+                url = fdfs_addr + fdfs_client.uploadbyBuffer(f, suffix)
+                name = url[url.rfind('/') + 1:]
+                img = Image(name, url, ImageType.ORIGIN, -1, current_user.id, dynamic.id)
+                db.session.add(img)
+            db.session.commit()
+            fireEvent(EventModel(EventType.DYNAMIC, current_user.id, EntityType.DYNAMIC, dynamic.id, current_user.id,
+                                 {'dynamicdetail': '/dynamic/'+str(dynamic.id)}))
+        else:
+            img=Image.query.filter_by(id=imgid).first()
+            compareimg=Image.query.filter_by(id=compareimgid).first()
+            img.dynamic_id=dynamic.id
+            compareimg.dynamic_id = dynamic.id
+            db.session.commit()
+            fireEvent(EventModel(EventType.SHARE, current_user.id, EntityType.DYNAMIC, dynamic.id, current_user.id,
+                                 {'dynamicdetail': '/dynamic/'+str(dynamic.id)}))
         return redirect('/')
     else:
-        return render_template('adddynamic.html')
+        imgid = request.args.get('imgid')
+        if imgid == None:
+            return render_template('adddynamic.html')
+        else:
+            img = Image.query.filter_by(id=imgid).first()# 处理之后的图片
+            if ImageType(img.action) == ImageType.SRCNN:
+                compareimg = Image.query.filter_by(id=img.orig_id).first()# 原图
+            elif ImageType(img.action) == ImageType.UPSCALE_2X:
+                compareimg = Image.query.filter_by(orig_id=img.orig_id, action=ImageType.BICUBIC_UPSCALE_2X.value).first()
+            elif ImageType(img.action) == ImageType.UPSCALE_3X:
+                compareimg = Image.query.filter_by(orig_id=img.orig_id, action=ImageType.BICUBIC_UPSCALE_3X.value).first()
+
+            return render_template('adddynamic.html', img=img,compareimg=compareimg)
 
 
 @dynamic.route("/more", methods={'get', 'post'})
@@ -120,11 +144,11 @@ def like():
     if conn.sismember(rediskey, current_user.id):  # 如果已经点赞过
         conn.srem(rediskey, current_user.id)
         conn.set(rediskey2, int(conn.get(rediskey2)) - 1)
-        return jsonify(code=201,likecount=conn.scard(rediskey))
+        return jsonify(code=201, likecount=conn.scard(rediskey))
     else:
         conn.sadd(rediskey, current_user.id)
         if conn.get(rediskey2) != None:
             conn.set(rediskey2, int(conn.get(rediskey2)) + 1)
         else:
             conn.set(rediskey2, 1)
-        return jsonify(code=200,likecount=conn.scard(rediskey))
+        return jsonify(code=200, likecount=conn.scard(rediskey))

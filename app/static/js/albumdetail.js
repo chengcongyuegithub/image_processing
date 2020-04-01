@@ -100,49 +100,57 @@ $(document).ready(function () {
                     }
                   });
              });
-             var flag=true;
              $('.comparebtn').click(function (){
+                  if($('.col-md-6').length==2){
+                      return ;
+                  }
                   var imgid=$(this).parent().children('input[type=hidden]').val();
                   $.ajax({
                     url: '/image/compare',
                     type: 'post',
                     dataType: 'json',
                     data: JSON.stringify({
-                        imgid:imgid,
-                        flag:flag
+                        imgid:imgid
                     }),
                     headers: {
                         "Content-Type": "application/json;charset=utf-8"
                     },
                     contentType: 'application/json; charset=utf-8',
                     success: function (res) {
-                        if(flag){
-                            $('.col-md-6').removeClass('col-md-offset-3');
-                            var newdiv='<div class="col-md-6"><img src="'+res['url']+'" class="img-responsive"/></div>';
-                            $('.col-md-6').parent().append(newdiv);
-                            flag=false;
-                        }
+                        $('.col-md-6').removeClass('col-md-offset-3');
+                        var newdiv='<div class="col-md-6"><img src="'+res['url']+'" class="img-responsive"/></div>';
+                        $('.col-md-6').parent().append(newdiv);
+                        var sharebtn='<button type="button" class="sharebtn btn btn-info">分享动态</button>';
+                        $('.modal-footer').append(sharebtn);
                     }
                   });
+             });
+             $('.modal-footer').on('click','.sharebtn',function(){
+                    //alert('!!!!!!');
+                    var imgid=$(this).parent().children('input[type=hidden]').val();
+                    //alert(imgid);
+                    window.location.href = "/dynamic/adddynamic?imgid="+imgid;
              });
         });
     });
     $('#albumdetailmodel').on('hidden.bs.modal', function (){
-        $.ajax({
-                url: '/image/closecompare',
-                type: 'post',
-                dataType: 'json',
-                data: JSON.stringify({
-                    imgid:imgid
-                }),
-                headers: {
-                    "Content-Type": "application/json;charset=utf-8"
-                },
-                contentType: 'application/json; charset=utf-8',
-                success: function (res) {
+       if($('.col-md-6').length==2) {
+           $.ajax({
+               url: '/image/closecompare',
+               type: 'post',
+               dataType: 'json',
+               data: JSON.stringify({
+                   imgid: imgid
+               }),
+               headers: {
+                   "Content-Type": "application/json;charset=utf-8"
+               },
+               contentType: 'application/json; charset=utf-8',
+               success: function (res) {
 
-                }
-              });
+               }
+           });
+       }
     });
     $('.row img').jqthumb({
             width: '100%',//宽度

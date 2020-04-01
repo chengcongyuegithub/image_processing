@@ -177,9 +177,6 @@ def superresolution():
 def compare():
     data = json.loads(request.get_data(as_text=True))
     imgid = data['imgid']
-    flag = data['flag']
-    if flag == False:
-        return jsonify(code=400)
     img = Image.query.filter_by(id=imgid).first()
     orginimg = Image.query.filter_by(id=img.orig_id).first()  # 原图
     if ImageType(img.action) == ImageType.SRCNN:
@@ -189,12 +186,12 @@ def compare():
             times = 2  # Upscale_2x
             eimg=Image.query.filter_by(orig_id=img.orig_id, action=ImageType.BICUBIC_UPSCALE_2X.value).first()
             if eimg!=None:
-                return jsonify(code=201)
+                return jsonify(code=201,url=eimg.url)
         elif ImageType(img.action)==ImageType.UPSCALE_3X:
             times = 3
             eimg = Image.query.filter_by(orig_id=img.orig_id, action=ImageType.BICUBIC_UPSCALE_3X.value).first()
             if eimg != None:
-                return jsonify(code=201)
+                return jsonify(code=201, url=eimg.url)
         imgContent = fdfs_client.downloadbyBuffer(orginimg.url[len(fdfs_addr):])
         orgimg = cv.imdecode(np.frombuffer(imgContent, np.uint8), cv.IMREAD_COLOR)
         with tf.Session() as sess:
@@ -210,7 +207,7 @@ def compare():
         if times==3:
             newpic = Image(imgname, url,ImageType.BICUBIC_UPSCALE_3X , orginimg.id, current_user.id, -1)
         elif times==2:
-            newpic = Image(imgname, url,ImageType.BICUBIC_UPSCALE_3X , orginimg.id, current_user.id, -1)
+            newpic = Image(imgname, url,ImageType.BICUBIC_UPSCALE_2X , orginimg.id, current_user.id, -1)
         db.session.add(newpic)
         db.session.flush()
         db.session.commit()
