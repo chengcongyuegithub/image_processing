@@ -1,24 +1,36 @@
 from flask import *
-from app import app,conn
-from .models import Dynamic, Image, ImageType, User, Comment
+from app import app, conn, socketio, emit
+from .models import Dynamic, Image, ImageType, User, Comment,Message
 from flask_login import current_user
 
 
 @app.route("/")
 def index():
     # 动态
-    dynamiclist = Dynamic.query.order_by(Dynamic.changetime.desc()).all()
+    dynamiclist = Dynamic.query.order_by(Dynamic.changetime.desc()).limit(5).all()
     indexlist = []
     for dynamic in dynamiclist:
-        dict=showdynamic(dynamic,True)
+        dict = showdynamic(dynamic, True)
         indexlist.append(dict)
     return render_template('index.html', indexlist=indexlist)
 
-def showdynamic(dynamic,isshowuser):
+@app.route("/more",methods=['POST'])
+def more():
+    data = json.loads(request.get_data(as_text=True))
+    offset = data['offset']
+    dynamiclist = Dynamic.query.order_by(Dynamic.changetime.desc()).limit(5).offset(int(offset)).all()
+    indexlist = []
+    for dynamic in dynamiclist:
+        dict = showdynamic(dynamic, True)
+        indexlist.append(dict)
+    return jsonify(code=200,indexlist=indexlist)
+
+# 动态的处理
+def showdynamic(dynamic, isshowuser):
     dict = {}
-    if(isshowuser):
+    if (isshowuser):
         user = User.query.filter_by(id=dynamic.user_id).first()
-        dict['userid']=user.id
+        dict['userid'] = user.id
         dict['name'] = user.nickname
         dict['headurl'] = user.head_url
     dict['time'] = dynamic.changetime
@@ -49,6 +61,8 @@ def showdynamic(dynamic,isshowuser):
         dict['likeflag'] = conn.sismember(rediskey, current_user.id)
     return dict
 
+
+# 通过树的形式获取到评论
 def getAllComment(commentslist, id):
     comments = Comment.query.filter_by(entityType=2, entityId=id).all()
     for comment in comments:
@@ -63,6 +77,7 @@ def getAllComment(commentslist, id):
         f(comment.id, commentslist, user.nickname)
 
 
+# 递归
 def f(id, list, parentname):
     comments = Comment.query.filter_by(entityType=3, entityId=id).all()
     if comments == None: return
@@ -88,3 +103,13 @@ def byte2int(id):
     id = str(id, encoding="utf-8")
     id = int(id)
     return id
+
+@socketio.on('connect', namespace='/websocket')
+def test_connect():
+    if isinstance(current_user.is_anonymous, bool):
+        return
+    else:
+        # 私信未读
+        message=Message.query.filter_by(toId=current_user.id,hasRead=0).all()
+        # feed
+        emit('noreadmsg', {'data': len(message)})

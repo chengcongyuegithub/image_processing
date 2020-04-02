@@ -4,6 +4,7 @@ from .configs import *
 from flask_bootstrap import Bootstrap
 from redis import ConnectionPool
 from concurrent.futures import ThreadPoolExecutor
+from flask_socketio import SocketIO, emit
 import redis
 from fastdfs.fastdfsUtil import Fdfs
 import os
@@ -29,6 +30,9 @@ fdfs_client = Fdfs(fastdfs_client)
 fdfs_addr = 'http://192.168.158.20:88/'
 # 处理大型任务的线程池
 largetaskexecutor = ThreadPoolExecutor(max_workers=4)
+# websocket服务器
+socketio = SocketIO(app)
+
 from event.handler import EventHandler
 # handler初始化
 handlerdict={}
@@ -43,8 +47,6 @@ for sc in EventHandler.__subclasses__():
 # 异步任务消费者线程启动
 from event.event_queue import *
 EventThread('task_queue_thread').start()
-#任务列表，实际上只存一个正在运行的任务
-
 
 from .models import *
 

@@ -29,7 +29,8 @@
                     <li class="divider"></li>
                     <li><a href="/user/feed"><span class="glyphicon glyphicon-heart"></span>我的关注</a></li>
                     <li class="divider"></li>
-                    <li><a href="/user/message"><span class="glyphicon glyphicon-envelope"></span>私信</a></li>
+                    <li><a href="/user/message"><span class="glyphicon glyphicon-envelope"></span>私信
+                        <label class="noreadmsg text-danger"></label></a></li>
                     <li class="divider"></li>
                     <li><a href="/user/logout"><span class="glyphicon glyphicon-log-out"></span>退出系统</a></li>
                 </ul>
@@ -64,6 +65,7 @@
 {% endblock %}
 {% block scripts %}
 {{super()}}
+<script type="text/javascript" src="//cdn.bootcss.com/socket.io/1.5.1/socket.io.min.js"></script>
 <script type="text/javascript" src="../static/js/base.js"></script>
 <script type="text/javascript" src="../static/js/fileinput.min.js"></script>
 <script type="text/javascript" src="../static/js/zh.js"></script>
