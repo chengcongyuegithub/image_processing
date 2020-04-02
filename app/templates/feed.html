@@ -15,7 +15,7 @@
         <ul class="list-group">
             {% for feed in feedlist%}
             <li class="list-group-item followli">
-                <a href="/user/feed['id']"><img class="userimg img-circle" src="{{feed['headurl']}}"></a>
+                <a href="/user/{{feed['id']}}"><img class="userimg img-circle" src="{{feed['headurl']}}"></a>
                 <label class="followcontent">
                     我关注的&nbsp;&nbsp;{{feed['name']}}&nbsp;&nbsp;的用户&nbsp;&nbsp;{{feed['action']}}
                     &nbsp;&nbsp;<a href="{{feed['data']}}">查看详情</a>

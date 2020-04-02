@@ -19,6 +19,8 @@ def more():
     data = json.loads(request.get_data(as_text=True))
     offset = data['offset']
     dynamiclist = Dynamic.query.order_by(Dynamic.changetime.desc()).limit(5).offset(int(offset)).all()
+    if len(dynamiclist)==0:
+        return jsonify(code=400)
     indexlist = []
     for dynamic in dynamiclist:
         dict = showdynamic(dynamic, True)

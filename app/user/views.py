@@ -16,7 +16,7 @@ import sys
 @login_required
 def index():
     # 动态
-    dynamiclist = Dynamic.query.filter_by(user_id=current_user.id).order_by(Dynamic.changetime.desc()).all()
+    dynamiclist = Dynamic.query.filter_by(user_id=current_user.id).order_by(Dynamic.changetime.desc()).limit(1).all()
     indexlist = []
     for dynamic in dynamiclist:
         dict = showdynamic(dynamic, False)
@@ -24,6 +24,24 @@ def index():
     userinfodict = userinfo(str(current_user.id))
     return render_template('user.html', userlist=indexlist,
                            user=current_user, userinfodict=userinfodict)
+
+
+@user.route("/more", methods={'get', 'post'})
+@login_required
+def more():
+    # 动态
+    data = json.loads(request.get_data(as_text=True))
+    offset = data['offset']
+    userid = data['userid']
+    dynamiclist = Dynamic.query.filter_by(user_id=int(userid)).order_by(Dynamic.changetime.desc()).limit(1).offset(
+        int(offset)).all()
+    if len(dynamiclist)==0:
+        return jsonify(code=400)
+    indexlist = []
+    for dynamic in dynamiclist:
+        dict = showdynamic(dynamic, False)
+        indexlist.append(dict)
+    return jsonify(code=200, userlist=indexlist)
 
 
 @user.route("/follower")
@@ -51,7 +69,8 @@ def follow():
     conn.zadd(followerkey, {current_user.id: time.time()})
     conn.zadd(followeekey, {userid: time.time()})
     # 发送私信
-    fireEvent(EventModel(EventType.FOLLOW, current_user.id, EntityType.USER, userid, userid, {'name': current_user.nickname,'detail':'/user/'+userid}))
+    fireEvent(EventModel(EventType.FOLLOW, current_user.id, EntityType.USER, userid, userid,
+                         {'name': current_user.nickname, 'detail': '/user/' + userid}))
     return jsonify(code=200)
 
 
@@ -87,15 +106,31 @@ def otheruser(userid):
         else:
             isfollow = False
     # 当前用户的关注
-    dynamiclist = Dynamic.query.filter_by(user_id=userid).order_by(Dynamic.changetime.desc()).all()
+    dynamiclist = Dynamic.query.filter_by(user_id=userid).order_by(Dynamic.changetime.desc()).limit(1).all()
     indexlist = []
     for dynamic in dynamiclist:
-        dict=showdynamic(dynamic,False)
+        dict = showdynamic(dynamic, False)
         indexlist.append(dict)
     userinfodict = userinfo(userid)
     # 获得赞数量
     return render_template('otheruser.html', user=user, msgflag=msgflag, updateflag=True,
                            followflag=isfollow, userinfodict=userinfodict, userlist=indexlist)
+
+
+@user.route("/othermore", methods={'get', 'post'})
+@login_required
+def othermore():
+    # 动态
+    data = json.loads(request.get_data(as_text=True))
+    offset = data['offset']
+    userid = data['userid']
+    dynamiclist = Dynamic.query.filter_by(user_id=int(userid)).order_by(Dynamic.changetime.desc()).limit(1).offset(
+        int(offset)).all()
+    indexlist = []
+    for dynamic in dynamiclist:
+        dict = showdynamic(dynamic, False)
+        indexlist.append(dict)
+    return jsonify(code=200, userlist=indexlist)
 
 
 @user.route("/follower<userid>")

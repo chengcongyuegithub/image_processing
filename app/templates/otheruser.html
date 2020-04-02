@@ -12,50 +12,49 @@
                 <div class="panel-heading">
                     <label class="time">{{dynamic['time']}}</label>
                 </div>
-        <div class="panel-body">
-            <div> {{dynamic['content']}} &nbsp;&nbsp;{% if dynamic['flag'] %}<label class="more"><a>全文</a></label>{% endif%}
-            </div>
-            <div class="row">
-                {% for img in dynamic['imgs'] %}
-                <div class="col-sm-4 col-md-4">
-                    <div class="thumbnail">
-                        <img src="{{img}}" class=" dynmaicimg">
+                <div class="panel-body">
+                    <div> {{dynamic['content']}} &nbsp;&nbsp;{% if dynamic['flag'] %}<label class="more"><a>全文</a></label>{% endif%}
+                    </div>
+                    <div class="row">
+                        {% for img in dynamic['imgs'] %}
+                        <div class="col-sm-4 col-md-4">
+                            <div class="thumbnail">
+                                <img src="{{img}}" class=" dynmaicimg">
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    <div class="action">
+                        {% if dynamic['likeflag'] %}
+                        <label class="likelabel">已点赞({{dynamic['likecount']}})</label>&nbsp;&nbsp;
+                        {% else:%}
+                        <label class="likelabel">点赞</label>&nbsp;&nbsp;&nbsp;
+                        {% endif%}
+                        <label class="commentlabel">评论</label>&nbsp;&nbsp;&nbsp
                     </div>
                 </div>
-                {% endfor %}
+                <div class="panel-footer commentpart">
+                    <ul class="list-unstyled">
+                        {% for comment in dynamic['comments'] %}
+                        <li id="{{comment['id']}}" class="commentli">
+                            <label >
+                                <a id="{{comment['userid']}}" href="/user/{{comment['userid']}}"
+                                   class="answer">{{comment['name']}}</a>
+                                {% if comment['actorname']!='-1'%}
+                                对<a>&nbsp;{{comment['actorname']}}</a> 回复
+                                {% endif%}
+                                ：<span class="comment">{{comment['content']}}</span>
+                            </label>
+                            <span class="pull-right glyphicon glyphicon-remove hide remove"></span>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                    <div class="form-inline">
+                         <input type="text" class="form-control" style="width:780px" id="name" placeholder="写出你的想法">
+                         <button type="button" class="btn btn-primary commentbtn">评论</button>
+                    </div>
+                </div>
             </div>
-            <div class="action">
-                {% if dynamic['likeflag'] %}
-                <label class="likelabel">已点赞({{dynamic['likecount']}})</label>&nbsp;&nbsp;
-                {% else:%}
-                <label class="likelabel">点赞</label>&nbsp;&nbsp;&nbsp;
-                {% endif%}
-                <label class="commentlabel">评论</label>&nbsp;&nbsp;&nbsp;
-                <label class="updatelabel">编辑</label>
-            </div>
-        </div>
-        <div class="panel-footer commentpart">
-            <ul class="list-unstyled">
-                {% for comment in dynamic['comments'] %}
-                <li id="{{comment['id']}}" class="commentli">
-                    <label >
-                        <a id="{{comment['userid']}}" href="/user/{{comment['userid']}}"
-                           class="answer">{{comment['name']}}</a>
-                        {% if comment['actorname']!='-1'%}
-                        对<a>&nbsp;{{comment['actorname']}}</a> 回复
-                        {% endif%}
-                        ：<span class="comment">{{comment['content']}}</span>
-                    </label>
-                    <span class="pull-right glyphicon glyphicon-remove hide remove"></span>
-                </li>
-                {% endfor %}
-            </ul>
-            <div class="form-inline">
-                 <input type="text" class="form-control" style="width:780px" id="name" placeholder="写出你的想法">
-                 <button type="button" class="btn btn-primary commentbtn">评论</button>
-            </div>
-        </div>
-    </div>
     {% endfor %}
 </div>
 <div class="modal fade" id="sendmsgmodel" tabindex="-1" role="dialog" aria-labelledby="myModalLabel"

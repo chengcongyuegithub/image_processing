@@ -3,7 +3,7 @@ from flask_login import login_required, current_user
 from . import dynamic
 from app import db, conn
 from app.models import Dynamic, Image, Comment, User, ImageType
-from app.views import getAllComment
+from app.views import showdynamic
 from app import fdfs_client, fdfs_addr
 from event.event_queue import fireEvent
 from event.model import EventType, EventModel, EntityType
@@ -12,28 +12,8 @@ from event.model import EventType, EventModel, EntityType
 @dynamic.route("/<dynamicid>", methods={'get', 'post'})
 @login_required
 def detail(dynamicid):
-    dynamic = Dynamic.query.filter_by(id=dynamicid).order_by(Dynamic.changetime.desc()).first()
-    user = User.query.filter_by(id=dynamic.user_id).first()
-    dict = {}
-    dict['name'] = user.nickname
-    dict['headurl'] = user.head_url
-    dict['time'] = dynamic.changetime
-    dict['content'] = dynamic.content
-    dict['id'] = dynamic.id
-    imgs = Image.query.filter_by(dynamic_id=dynamic.id).all()
-    imglist = []
-    for img in imgs:
-        imglist.append(img.url)
-    dict['imgs'] = imglist
-    commentslist = []
-    getAllComment(commentslist, dynamic.id)
-    dict['comments'] = commentslist
-    rediskey = 'like:' + str(dynamic.id)
-    dict['likecount'] = conn.scard(rediskey)
-    if isinstance(current_user.is_anonymous, bool):
-        dict['likeflag'] = False
-    else:
-        dict['likeflag'] = conn.sismember(rediskey, current_user.id)
+    dynamic = Dynamic.query.filter_by(id=dynamicid).first()
+    dict = showdynamic(dynamic, True)
     return render_template('dynamicdetail.html', dynamic=dict)
 
 
@@ -52,6 +32,7 @@ def index():
             files = request.files.getlist('dynamicimg')
             for f in files:
                 filename = f.filename
+                if filename==None or filename=='': break
                 f = f.read()
                 suffix = filename[filename.find('.') + 1:]
                 url = fdfs_addr + fdfs_client.uploadbyBuffer(f, suffix)
@@ -98,6 +79,7 @@ def more():
     dynamic = Dynamic.query.filter_by(id=id).first()
     return jsonify(code=200, content=dynamic.content)
 
+
 @dynamic.route("/packup", methods={'get', 'post'})
 def packup():
     data = json.loads(request.get_data(as_text=True))
@@ -121,7 +103,7 @@ def comment():
         db.session.flush()
         db.session.commit()
         fireEvent(EventModel(EventType.COMMENT, current_user.id, EntityType.DYNAMIC, id, userid,
-                             { 'detail': '/dynamic/' + id}))
+                             {'detail': '/dynamic/' + id}))
         return jsonify(code=200, username=current_user.nickname, userid=current_user.id, content=content,
                        commentid=comment.id)
     else:
@@ -150,9 +132,9 @@ def like():
     data = json.loads(request.get_data(as_text=True))
     dynamicid = data['dynamicid']
     # 是否点赞过
-    img = Image.query.filter_by(dynamic_id=dynamicid).first()
+    dynamic = Dynamic.query.filter_by(id=dynamicid).first()
     rediskey = 'like:' + dynamicid
-    rediskey2 = 'likeuser:' + str(img.user_id)
+    rediskey2 = 'likeuser:' + str(dynamic.user_id)
     if isinstance(current_user.is_anonymous, bool):
         return jsonify(code=400, message='用户尚未登录，无法点赞')
     if conn.sismember(rediskey, current_user.id):  # 如果已经点赞过
