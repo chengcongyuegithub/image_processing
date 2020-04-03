@@ -16,7 +16,7 @@ import sys
 @login_required
 def index():
     # 动态
-    dynamiclist = Dynamic.query.filter_by(user_id=current_user.id).order_by(Dynamic.changetime.desc()).limit(1).all()
+    dynamiclist = Dynamic.query.filter_by(user_id=current_user.id).order_by(Dynamic.changetime.desc()).limit(3).all()
     indexlist = []
     for dynamic in dynamiclist:
         dict = showdynamic(dynamic, False)
@@ -33,7 +33,7 @@ def more():
     data = json.loads(request.get_data(as_text=True))
     offset = data['offset']
     userid = data['userid']
-    dynamiclist = Dynamic.query.filter_by(user_id=int(userid)).order_by(Dynamic.changetime.desc()).limit(1).offset(
+    dynamiclist = Dynamic.query.filter_by(user_id=int(userid)).order_by(Dynamic.changetime.desc()).limit(3).offset(
         int(offset)).all()
     if len(dynamiclist)==0:
         return jsonify(code=400)
@@ -106,7 +106,7 @@ def otheruser(userid):
         else:
             isfollow = False
     # 当前用户的关注
-    dynamiclist = Dynamic.query.filter_by(user_id=userid).order_by(Dynamic.changetime.desc()).limit(1).all()
+    dynamiclist = Dynamic.query.filter_by(user_id=userid).order_by(Dynamic.changetime.desc()).limit(3).all()
     indexlist = []
     for dynamic in dynamiclist:
         dict = showdynamic(dynamic, False)

@@ -114,4 +114,5 @@ def test_connect():
         # 私信未读
         message=Message.query.filter_by(toId=current_user.id,hasRead=0).all()
         # feed
-        emit('noreadmsg', {'data': len(message)})
+        #h = a-b if a>b else a+b
+        emit('noreadmsg', {'data': '' if len(message)==0 else len(message)})

@@ -121,5 +121,5 @@ def delete():
     rediskey = 'useralbum:' + str(current_user.id)
     conn.srem(rediskey, albumid)
     # 删除内容----异步
-    # fireEvent(EventModel(EventType.TASK, current_user.id, EntityType.ALBUM, albumid, current_user.id,{'task': 'deleteinbatch', 'orginlname': name, 'action': '删除'}))
+    fireEvent(EventModel(EventType.TASK, current_user.id, EntityType.ALBUM, albumid, current_user.id,{'task': 'deleteinbatch', 'orginlname': name, 'action': '删除'}))
     return jsonify(code=200)

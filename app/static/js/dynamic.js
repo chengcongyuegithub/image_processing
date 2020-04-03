@@ -73,6 +73,11 @@ $(document).ready(function () {
     $('.container').on('click', '.newcommentbtn', function () {
         var input = $(this).prev();
         var content = input.val();
+         if (content == '') {
+            alertmsg = '评论不能为空';
+            $('#alertmodel').modal('show');
+            return;
+        }
         var li = $(this).parent().prev();
         var commentid = li.attr('id');
         var userid = $(this).parent().prev().children().children('.answer').attr('id');
@@ -183,7 +188,10 @@ $(document).ready(function () {
             contentType: 'application/json; charset=utf-8',
             success: function (res) {
                 if (res['code'] == '200') {
-                    li.remove();
+                    for(i=0;i<res['commentlist'].length;i++)
+                    {
+                        $('li#'+res['commentlist'][i]).remove()
+                    }
                 }
             }
         });
@@ -218,5 +226,25 @@ $(document).ready(function () {
                 }
             }
         });
+    });
+    $('.container').on('click','.deletelabel',function () {
+        var dynamic=$(this).parent().parent().parent();
+        var dynamicid=dynamic.children('input[type=hidden]').val();
+        $.ajax({
+            url: '/dynamic/delete',
+            type: 'post',
+            dataType: 'json',
+            data: JSON.stringify({
+                dynamicid: dynamicid
+            }),
+            headers: {
+                "Content-Type": "application/json;charset=utf-8"
+            },
+            contentType: 'application/json; charset=utf-8',
+            success: function (res){
+                dynamic.remove();
+            }
+        });
+
     });
 });

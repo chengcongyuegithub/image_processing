@@ -1,7 +1,8 @@
 $(document).ready(function () {
-    var offset = 1;
+    var offset = 3;
     var flag = true;
     $(document).scroll(function () {
+        if($('.mod').length!=0&&typeof($("#r-1").attr("checked"))=='undefined') return ;
         if (flag == false) return;
         var scroH = $(document).scrollTop();  //滚动高度
         var viewH = $(window).height();  //可见高度
@@ -45,6 +46,10 @@ $(document).ready(function () {
                                 newdynamic += '<label class="likelabel">点赞</label>&nbsp;&nbsp;&nbsp;';
                             }
                             newdynamic += '<label class="commentlabel">评论</label>&nbsp;&nbsp;&nbsp;';
+                            if(typeof($("#r-1").attr("checked"))!='undefined'){
+                                 newdynamic += '<label class="deletelabel">删除</label>';
+                            }
+                            //<label class="updatelabel">编辑</label>
                             newdynamic += '</div></div>';
                             newdynamic += '<div class="panel-footer commentpart"><ul class="list-unstyled">';
                             for (k = 0; k < res['userlist'][i].comments.length; k++) {
@@ -69,7 +74,7 @@ $(document).ready(function () {
                     } else {
                         return ;
                     }
-                    offset += 1;
+                    offset += 3;
                     flag = true;
                 }
             });

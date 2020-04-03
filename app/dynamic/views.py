@@ -3,7 +3,7 @@ from flask_login import login_required, current_user
 from . import dynamic
 from app import db, conn
 from app.models import Dynamic, Image, Comment, User, ImageType
-from app.views import showdynamic
+from app.views import showdynamic, byte2int
 from app import fdfs_client, fdfs_addr
 from event.event_queue import fireEvent
 from event.model import EventType, EventModel, EntityType
@@ -32,7 +32,7 @@ def index():
             files = request.files.getlist('dynamicimg')
             for f in files:
                 filename = f.filename
-                if filename==None or filename=='': break
+                if filename == None or filename == '': break
                 f = f.read()
                 suffix = filename[filename.find('.') + 1:]
                 url = fdfs_addr + fdfs_client.uploadbyBuffer(f, suffix)
@@ -70,6 +70,45 @@ def index():
                                                    action=ImageType.BICUBIC_UPSCALE_3X.value).first()
                 content = '传统的3x处理和系统SRCNN的3x处理的图片比较'
             return render_template('adddynamic.html', img=img, compareimg=compareimg, content=content)
+
+
+@dynamic.route("/delete", methods={'get', 'post'})
+def delete():
+    data = json.loads(request.get_data(as_text=True))
+    dynamicid = data['dynamicid']
+    dynamic = Dynamic.query.filter_by(id=dynamicid).first()
+    # 删除内容
+    db.session.delete(dynamic)
+    db.session.commit()
+    # 处理图片
+    imgs = Image.query.filter_by(dynamic_id=int(dynamicid)).all()
+    for img in imgs:
+        # 看当前图片是不是属于某个相册，如果属于的话，表明它是分享系统的动态，仅仅是改变属性
+        rediskey = 'useralbum:' + str(current_user.id)
+        flag = False
+        for albumid in conn.smembers(rediskey):
+            albumid = byte2int(albumid)
+            rediskey2 = 'album:' + str(current_user.id) + ':' + str(albumid)
+            isalbum = conn.zrank(rediskey2, img.id)
+            if isinstance(isalbum, int):  # 是相册的
+                img.dynamic_id = -1
+                flag = True
+                break
+        if (flag == False):
+            fdfs_client.delete(img.url[len(fdfs_addr):])
+            db.session.delete(img)
+        db.session.commit()
+    # 处理评论
+    comments = Comment.query.filter_by(entityType=EntityType.DYNAMIC.value, entityId=dynamicid).all()
+    for comment in comments:
+        deletecomments(comment.id,[])
+    # 处理点赞
+    rediskey = 'like:' + dynamicid
+    likecount = conn.scard(rediskey)
+    conn.delete(rediskey)
+    rediskey2 = 'likeuser:' + str(current_user.id)
+    conn.set(rediskey2, int(conn.get(rediskey2)) - likecount)
+    return jsonify(code=200, message='删除成功')
 
 
 @dynamic.route("/more", methods={'get', 'post'})
@@ -121,11 +160,23 @@ def comment():
 def deletecomment():
     data = json.loads(request.get_data(as_text=True))
     commentid = data['commentid']
-    comment = Comment.query.filter_by(id=commentid).first()
-    db.session.delete(comment)
-    db.session.commit()
-    return jsonify(code=200)
+    #comment = Comment.query.filter_by(id=commentid).first()
+    #db.session.delete(comment)
+    #db.session.commit()
+    commentlist=[]
+    deletecomments(int(commentid),commentlist)
+    return jsonify(code=200,commentlist=commentlist)
 
+def deletecomments(commentid,commentlist):
+    comment = Comment.query.filter_by(id=commentid).first()
+    commentlist.append(comment.id)
+    db.session.delete(comment)
+    comments=Comment.query.filter_by(entityType=EntityType.COMMENT.value,entityId=comment.id).all()
+    if len(comments)==0:
+        db.session.commit()
+        return
+    for comment in comments:
+        deletecomments(comment.id,commentlist)
 
 @dynamic.route('/like', methods={'get', 'post'})
 def like():
