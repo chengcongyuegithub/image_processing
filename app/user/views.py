@@ -298,14 +298,16 @@ def islogin():
 @login_required
 def message():
     # 外连接
-    msglist = db.session.query(Message.id, Message.content, Message.createtime, Message.hasRead, Message.action,
-                               User.nickname,
+    msglist = db.session.query(Message.id, Message.content, Message.createtime, Message.hasRead, Message.action,Message.extra,
+                               User.nickname,User.id,
                                User.head_url).outerjoin(User, Message.fromId == User.id).filter(
         Message.toId == current_user.id).order_by(Message.createtime.desc()).limit(10).all()
     msgdiclist = []
     for msg in msglist:
+        print(type(msg))
         dict = {}
-        dict['id'] = msg.id
+        dict['id'] = msg[0]
+        dict['userid']=msg[7]
         if msg.nickname != None and MessageType(msg.action) == MessageType.TALK:
             dict['content'] = msg.nickname + ' 对我说: ' + msg.content[0:200]
         else:
@@ -313,6 +315,7 @@ def message():
         dict['createtime'] = msg.createtime
         dict['hasRead'] = msg.hasRead
         dict['head_url'] = msg.head_url
+        dict['extra']=msg.extra
         msgdiclist.append(dict)
     return render_template('message.html', msglist=msgdiclist)
 
@@ -358,7 +361,7 @@ def sendmsg():
     data = json.loads(request.get_data(as_text=True))
     userid = data['userid']
     content = data['content']
-    message = Message(current_user.id, int(userid), content, MessageType.TALK)
+    message = Message(current_user.id, int(userid), content, MessageType.TALK,'')
     db.session.add(message)
     db.session.commit()
     return jsonify(code=200, message='信息已经发送')

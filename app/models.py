@@ -165,8 +165,10 @@ class Message(db.Model):
     #action的类型，是谈话，还是通知
     # notice or talk
     action=db.Column(db.Integer)
+    # dict 附加内容，表明要跳转的页面
+    extra=db.Column(db.String(20))
 
-    def __init__(self, fromId, toId, content,action):
+    def __init__(self, fromId, toId, content,action,extra):
         self.content = content
         self.fromId = fromId
         self.toId = toId
@@ -179,6 +181,7 @@ class Message(db.Model):
         else:
             self.conversationId = str(toId) + 'to' + str(fromId)
         self.action=action.value
+        self.extra=extra
 
     def __repr__(self):
         return '<Message %d %d %s>' % (self.fromId, self.toId, self.content)

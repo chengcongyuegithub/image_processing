@@ -35,7 +35,7 @@
     margin: 0px 0px 0px 10px;
     float: left;
 }
-.look{
+.look , .enter{
 	cursor: pointer;
 	color: limegreen;
 }

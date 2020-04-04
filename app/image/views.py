@@ -108,7 +108,7 @@ def upscaling():
                              {'task': 'srcnn_process', 'action': ImageType.UPSCALE_2X.value, 'suffix': suffix,
                               'albumid': albumid,
                               'time': time}))
-    return jsonify(code=200, message='得到的图片较大，稍后以私信的信息通知你')
+    return jsonify(code=200, message='得到的图片较大，稍后请刷新相册页面')
 
 
 @image.route('/superresolution', methods=['GET', 'POST'])
@@ -136,7 +136,7 @@ def superresolution():
                                   'albumid': albumid}))
             if flag==True:
                 return jsonify(code=203, message='请去图片所在相册查看结果')
-            return jsonify(code=201, message='图片较大，稍后以私信的信息通知你')
+            return jsonify(code=201, message='得到的图片较大，稍后请刷新相册页面')
         else:  # 小图片直接处理
             with tf.Session() as sess:
                 srcnn = SRCNN(sess, "../srcnn/checkpoint")

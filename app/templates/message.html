@@ -13,10 +13,11 @@
                 {% if msg['head_url'] == None%}
                 <img class="userimg img-circle" src="{{ url_for('static',filename='img/kittens.jpg') }}">
                 {% else %}
-                <img class="userimg img-circle" src="{{msg['head_url']}}"/>
+                <a href="/user/{{msg['userid']}}"><img class="userimg img-circle" src="{{msg['head_url']}}"/></a>
                 {% endif%}
                 <input type="hidden" value="{{msg['id']}}"/>
-                <label class="messagecontent">{{msg.content}}&nbsp;&nbsp;
+                <label class="messagecontent">{{msg.content}}
+                    {% if msg['extra']!=''%}<a class='enter' href="{{msg['extra']}}">进入</a>{% endif%}&nbsp;&nbsp;
                     <a class="look">
                         点击查看
                     </a>

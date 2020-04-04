@@ -94,9 +94,10 @@ $(document).ready(function () {
                     success: function (res) {
                         if(res['code']=='400')
                         {
-                            alertmsg=res['message'];
-                            $('#alertmodel').modal('show');
+                            $('.upscalingbtn button').attr('disabled','disabled');
                         }
+                        alertmsg=res['message'];
+                        $('#alertmodel').modal('show');
                     }
                   });
              });

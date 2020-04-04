@@ -2,11 +2,17 @@ var alertmsg;
 $(document).ready(function () {
     //刷新滚顶条回到顶部
     $('html,body').animate({scrollTop:0},1000);
+
+    //var socket = io.connect();
     var socket = io.connect('http://' + document.domain + ':' + location.port + '/websocket');
     socket.on('noreadmsg', function (msg) {
         $('.noreadmsg').empty();
         $('.noreadmsg').text(msg.data);
     });
+    /*socket.on('xxx', function(msg) {
+         //alert('!!!!');
+        //$('#content').append('<br>' + $('<div/>').text('Received #' + ': ' + msg.data).html());
+    });*/
 
     $('.basebtn').click(function () {
         var id = $(this).attr('id');
@@ -126,6 +132,5 @@ $(document).ready(function () {
             });
         });
     });
-
 
 });

@@ -138,11 +138,13 @@ def comment():
     userid = data['userid']
     if type == 'dynamic':
         comment = Comment(content, current_user.id, EntityType.DYNAMIC, id)
+        dynamic=Dynamic.query.filter_by(id=int(id)).first()
         db.session.add(comment)
         db.session.flush()
         db.session.commit()
-        fireEvent(EventModel(EventType.COMMENT, current_user.id, EntityType.DYNAMIC, id, userid,
-                             {'detail': '/dynamic/' + id}))
+        if dynamic.user_id!=current_user.id:
+            fireEvent(EventModel(EventType.COMMENT, current_user.id, EntityType.DYNAMIC, id, dynamic.user_id,
+                             {'detail': '/dynamic/' + id,'name':current_user.nickname}))
         return jsonify(code=200, username=current_user.nickname, userid=current_user.id, content=content,
                        commentid=comment.id)
     else:
@@ -152,6 +154,8 @@ def comment():
         comment = Comment(content, current_user.id, EntityType.COMMENT, id)
         db.session.add(comment)
         db.session.commit()
+        fireEvent(EventModel(EventType.COMMENT, current_user.id, EntityType.COMMENT, id, userid,
+                             {'detail': '/dynamic/' + id, 'name': current_user.nickname}))
         return jsonify(code=201, username=current_user.nickname, userid=current_user.id, content=content,
                        commentid=comment.id, actorname=actoruser.nickname)
 

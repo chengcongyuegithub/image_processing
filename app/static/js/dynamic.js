@@ -73,7 +73,7 @@ $(document).ready(function () {
     $('.container').on('click', '.newcommentbtn', function () {
         var input = $(this).prev();
         var content = input.val();
-         if (content == '') {
+        if (content == '') {
             alertmsg = '评论不能为空';
             $('#alertmodel').modal('show');
             return;
@@ -188,15 +188,14 @@ $(document).ready(function () {
             contentType: 'application/json; charset=utf-8',
             success: function (res) {
                 if (res['code'] == '200') {
-                    for(i=0;i<res['commentlist'].length;i++)
-                    {
-                        $('li#'+res['commentlist'][i]).remove()
+                    for (i = 0; i < res['commentlist'].length; i++) {
+                        $('li#' + res['commentlist'][i]).remove()
                     }
                 }
             }
         });
     });
-    $('.container').on('click','.likelabel',function () {
+    $('.container').on('click', '.likelabel', function () {
         var like = $(this);
         var dynamicid = like.parent().parent().parent().children('input[type=hidden]').val();
         //alert(dynamicid);
@@ -227,9 +226,9 @@ $(document).ready(function () {
             }
         });
     });
-    $('.container').on('click','.deletelabel',function () {
-        var dynamic=$(this).parent().parent().parent();
-        var dynamicid=dynamic.children('input[type=hidden]').val();
+    $('.container').on('click', '.deletelabel', function () {
+        var dynamic = $(this).parent().parent().parent();
+        var dynamicid = dynamic.children('input[type=hidden]').val();
         $.ajax({
             url: '/dynamic/delete',
             type: 'post',
@@ -241,10 +240,17 @@ $(document).ready(function () {
                 "Content-Type": "application/json;charset=utf-8"
             },
             contentType: 'application/json; charset=utf-8',
-            success: function (res){
+            success: function (res) {
                 dynamic.remove();
             }
         });
-
+    });
+    var img;
+    $('.dynamicimg').click(function () {
+        img = $(this).children('img').attr('src');
+        $('#dynamicimgmodel').modal('show');
+    });
+    $('#dynamicimgmodel').on('shown.bs.modal', function () {
+        $('#dynamicimgmodel-part').load('/showimage', {img: img});
     });
 });

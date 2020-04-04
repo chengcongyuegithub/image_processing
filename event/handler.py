@@ -1,4 +1,4 @@
-from .model import EventType
+from .model import EventType,EntityType
 from app.models import Message,MessageType,User,Feed,ImageType
 from app import db, largetaskexecutor, conn,socketio,emit
 from .largetask import deleteinbatch, srcnn_process
@@ -19,7 +19,7 @@ class FollowEventHandler(EventHandler):
         print('FollowEventHandler被创建了')
 
     def dohandler(self, eventModel):
-        message = Message(eventModel.actorId, eventModel.entityId, '名为 ' + eventModel.dict['name'] + ' 的用户关注了你',MessageType.NOTICE)
+        message = Message(eventModel.actorId, eventModel.entityId, '名为 ' + eventModel.dict['name'] + ' 的用户关注了你',MessageType.NOTICE,'')
         db.session.add(message)
         db.session.commit()
 
@@ -43,7 +43,15 @@ class CommentEventHandler(EventHandler):
         print('CommentEventHandler被创建了')
 
     def dohandler(self, eventModel):
-        print('评论事件发生的时候')
+        if eventModel.entityType==EntityType.DYNAMIC:
+            message = Message(eventModel.actorId, eventModel.entityOwnerId, '名为 '+eventModel.dict['name']+' 的人评论了你的动态',
+                          MessageType.NOTICE,eventModel.dict['detail'])
+        else :
+            message = Message(eventModel.actorId, eventModel.entityOwnerId,
+                              '名为 ' + eventModel.dict['name'] + ' 的人回复了你的评论',
+                              MessageType.NOTICE, eventModel.dict['detail'])
+        db.session.add(message)
+        db.session.commit()
 
     def getSupportEventTypes(self):
         return [EventType.COMMENT]
@@ -55,7 +63,7 @@ class RegistEventHandler(EventHandler):
 
     def dohandler(self, eventModel):
         print(type(MessageType.NOTICE.value))
-        message = Message(-1, eventModel.entityId, '欢迎来到图片处理系统!!!',MessageType.NOTICE)
+        message = Message(-1, eventModel.entityId, '欢迎来到图片处理系统!!!',MessageType.NOTICE,'')
         db.session.add(message)
         db.session.commit()
 
@@ -68,6 +76,8 @@ class FeedEventHandler(EventHandler):
         print('FeedEventHandler被创建了')
 
     def dohandler(self, eventModel):
+        # 评论评论不算做新鲜事
+        if eventModel.entityType==EntityType.COMMENT: return
         followerkey = 'follower:1:' + str(eventModel.actorId)
         feed=Feed(eventModel.eventType,eventModel.actorId,json.dumps(eventModel.dict))
         db.session.add(feed)
@@ -89,7 +99,7 @@ class AlbumEventHandler(EventHandler):
 
     def dohandler(self, eventModel):
         message = Message(-1, eventModel.entityOwnerId,
-                          '您刚刚' + eventModel.dict['action'] + '了名称为 ' + eventModel.dict['orginlname'] + ' 的相册信息',MessageType.NOTICE)
+                          '您刚刚' + eventModel.dict['action'] + '了名称为 ' + eventModel.dict['orginlname'] + ' 的相册信息',MessageType.NOTICE,'')
         db.session.add(message)
         db.session.commit()
 
