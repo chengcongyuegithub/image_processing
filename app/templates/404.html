@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% block title %}404{% endblock %}
+{% block container%}
+<div class="text-center" >
+    <h1>404</h1>
+    <h3>页面未能够找到！! !</h3>
+    <label><span id="num">5</span>秒后跳转到系统首页......</label>
+</div>
+{% endblock %}
+{% block scripts %}
+{{super()}}
+<script type="text/javascript" src="../static/js/404.js"></script>
+{% endblock %}

@@ -39,6 +39,10 @@ def showimage():
     img = request.values.get('img')
     return render_template('dynamicimage.html',img=img)
 
+# 错误页面的跳转
+@app.errorhandler(404)
+def page_not_found(error):
+    return render_template('404.html')
 
 # 动态的处理
 def showdynamic(dynamic, isshowuser):

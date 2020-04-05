@@ -96,6 +96,7 @@ def otheruser(userid):
     elif isinstance(current_user.is_anonymous, bool):  # 匿名的情况
         msgflag = False  # 匿名的情况
     user = User.query.filter_by(id=userid).first()
+    if user==None: abort(404)
     # 当前用户是否关注的查看的用户
     isfollow = True
     if msgflag:  # 如果不是匿名的情况
@@ -141,6 +142,7 @@ def otherfollower(userid):
     elif isinstance(current_user.is_anonymous, bool):
         nameflag = False
     user = User.query.filter_by(id=userid).first()
+    if user==None: abort(404)
     list = followerlist(userid)
     return render_template('follower.html', followerlist=list, nameflag=nameflag, username=user.nickname)
 
@@ -153,6 +155,7 @@ def otherfollowee(userid):
     elif isinstance(current_user.is_anonymous, bool):
         nameflag = False
     user = User.query.filter_by(id=userid).first()
+    if user == None: abort(404)
     list = followeelist(userid)
     return render_template('followee.html', followeelist=list, nameflag=nameflag, username=user.nickname)
 
