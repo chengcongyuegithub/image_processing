@@ -7,7 +7,7 @@ from srcnn.model import SRCNN
 from io import BytesIO
 import sys
 import time
-
+import json
 
 # 大型任务1：批量删除大量的图片
 def deleteinbatch(userid, albumid):
@@ -34,7 +34,7 @@ def srcnn_process(imgid, albumid, userid, action, times=1):
     img = cv.imdecode(np.frombuffer(imgContent, np.uint8), cv.IMREAD_COLOR)
     g1 = tf.Graph()
     with tf.Session(graph=g1) as sess:
-        srcnn = SRCNN(sess, "../srcnn/checkpoint")
+        srcnn = SRCNN(sess, "\srcnn\checkpoint")
         if ImageType(action) == ImageType.SRCNN:
             print('清晰化处理')
             img = srcnn.superresolution(img)
@@ -58,4 +58,9 @@ def srcnn_process(imgid, albumid, userid, action, times=1):
     else:
         rediskey = 'album:' + str(userid) + ':' + albumid
     conn.zadd(rediskey, {newimg.id: time.time()})
+    # 系统统计结果
+    dictstr = conn.rpop('count')
+    dict = eval(dictstr)
+    dict['count'] = int(dict['count']) + 1
+    conn.rpush('count', json.dumps(dict))
     return True

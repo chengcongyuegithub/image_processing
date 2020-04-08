@@ -2,10 +2,13 @@ from flask import *
 from app import app, conn, socketio, emit
 from .models import Dynamic, Image, ImageType, User, Comment, Message
 from flask_login import current_user
-import datetime
 from threading import Lock
+import time
+import datetime
 
-_thread = None
+thread1 = None
+thread2 = None
+start_time = None
 lock = Lock()
 
 
@@ -34,15 +37,17 @@ def more():
     return jsonify(code=200, indexlist=indexlist)
 
 
-@app.route("/showimage",methods=['POST'])
+@app.route("/showimage", methods=['POST'])
 def showimage():
     img = request.values.get('img')
-    return render_template('dynamicimage.html',img=img)
+    return render_template('dynamicimage.html', img=img)
+
 
 # 错误页面的跳转
 @app.errorhandler(404)
 def page_not_found(error):
     return render_template('404.html')
+
 
 # 动态的处理
 def showdynamic(dynamic, isshowuser):
@@ -118,6 +123,11 @@ def alert():
     return render_template('alert.html', alertcontent=alertcontent)
 
 
+@app.route("/statistics")
+def statistics():
+    return render_template('statistics.html')
+
+
 def byte2int(id):
     id = str(id, encoding="utf-8")
     id = int(id)
@@ -126,11 +136,12 @@ def byte2int(id):
 
 @socketio.on('connect', namespace='/websocket')
 def test_connect():
-    # 单例模式创建线程
-    global _thread
+    # 单例模式创建线程，定时发布消息
+    global thread1, thread2
     with lock:
-        if _thread is None:
-            _thread = socketio.start_background_task(target=background_task)
+        if thread1 is None:
+            thread1 = socketio.start_background_task(target=background_task)
+            thread2 = socketio.start_background_task(target=background_task2)
 
     # 未读信息
     if isinstance(current_user.is_anonymous, bool):
@@ -142,7 +153,24 @@ def test_connect():
         # h = a-b if a>b else a+b
         emit('noreadmsg', {'data': '' if len(message) == 0 else len(message)})
 
-
+# 任务1：定时发送任务
 def background_task():
+    count = 0
     while True:
-        socketio.sleep(10)
+        str = conn.lindex('count', -1)  # 取倒数第二个
+        dict = eval(str)
+        print(dict)
+        socketio.emit('count',
+                      {'data': dict['time'], 'count': dict['count']},
+                      namespace='/websocket')
+        socketio.sleep(5)
+
+# 任务2：定时统计使用次数
+def background_task2():
+    start_time = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")  # 开始时间
+    conn.rpush('count', json.dumps({'count': 0, 'time': start_time}))
+    while True:
+        future_time = (datetime.datetime.now() + datetime.timedelta(seconds=+5)).strftime(
+            "%Y-%m-%d %H:%M:%S")  # 当前5秒之后的时间
+        conn.rpush('count', json.dumps({'count': 0, 'time': future_time}))
+        socketio.sleep(5)

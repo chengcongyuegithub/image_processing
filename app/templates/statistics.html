@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% block title %}index{% endblock %}
+{% block styles %}
+{{super()}}
+{% endblock %}
+{% block container%}
+<div id="main" style="height:500px;border:1px solid #ccc;padding:10px;">
+</div>
+{% endblock %}
+{% block scripts %}
+{{super()}}
+<script type="text/javascript" src="../static/js/echarts.min.js"></script>
+<script type="text/javascript" src="../static/js/statistics.js"></script>
+{% endblock %}

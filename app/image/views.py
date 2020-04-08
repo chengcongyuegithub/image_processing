@@ -139,7 +139,7 @@ def superresolution():
             return jsonify(code=201, message='得到的图片较大，稍后请刷新相册页面')
         else:  # 小图片直接处理
             with tf.Session() as sess:
-                srcnn = SRCNN(sess, "../srcnn/checkpoint")
+                srcnn = SRCNN(sess, "\srcnn\checkpoint")
                 img = srcnn.superresolution(img)
             img = Img.fromarray(img)
             f = BytesIO()
@@ -157,6 +157,11 @@ def superresolution():
             else:
                 rediskey = 'album:' + str(current_user.id) + ':' + albumid
             conn.zadd(rediskey, {newimg.id: time.time()})
+            # 系统统计
+            dictstr=conn.rpop('count')
+            dict=eval(dictstr)
+            dict['count']=int(dict['count'])+1
+            conn.rpush('count',json.dumps(dict))
             if flag==True:
                 return jsonify(code=203, message='请去图片所在相册查看结果')
             return jsonify(code=200, message="success srcnn")
