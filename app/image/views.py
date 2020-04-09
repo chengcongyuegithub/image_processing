@@ -158,10 +158,11 @@ def superresolution():
                 rediskey = 'album:' + str(current_user.id) + ':' + albumid
             conn.zadd(rediskey, {newimg.id: time.time()})
             # 系统统计
-            dictstr=conn.rpop('count')
-            dict=eval(dictstr)
-            dict['count']=int(dict['count'])+1
-            conn.rpush('count',json.dumps(dict))
+            for i in range(0,2):
+                dictstr=conn.rpop('count')
+                dict=eval(dictstr)
+                dict['count']=int(dict['count'])+1
+                conn.rpush('count',json.dumps(dict))
             if flag==True:
                 return jsonify(code=203, message='请去图片所在相册查看结果')
             return jsonify(code=200, message="success srcnn")

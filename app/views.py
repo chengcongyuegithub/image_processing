@@ -3,7 +3,6 @@ from app import app, conn, socketio, emit
 from .models import Dynamic, Image, ImageType, User, Comment, Message
 from flask_login import current_user
 from threading import Lock
-import time
 import datetime
 
 thread1 = None
@@ -153,17 +152,22 @@ def test_connect():
         # h = a-b if a>b else a+b
         emit('noreadmsg', {'data': '' if len(message) == 0 else len(message)})
 
+
 # 任务1：定时发送任务
 def background_task():
     count = 0
     while True:
         str = conn.lindex('count', -1)  # 取倒数第二个
-        dict = eval(str)
-        print(dict)
-        socketio.emit('count',
-                      {'data': dict['time'], 'count': dict['count']},
-                      namespace='/websocket')
+        if str == None:
+            continue
+        else:
+            dict = eval(str)
+            print(dict)
+            socketio.emit('count',
+                          {'data': dict['time'], 'count': dict['count']},
+                          namespace='/websocket')
         socketio.sleep(5)
+
 
 # 任务2：定时统计使用次数
 def background_task2():
@@ -173,4 +177,7 @@ def background_task2():
         future_time = (datetime.datetime.now() + datetime.timedelta(seconds=+5)).strftime(
             "%Y-%m-%d %H:%M:%S")  # 当前5秒之后的时间
         conn.rpush('count', json.dumps({'count': 0, 'time': future_time}))
+        print(conn.llen('count'))
+        while conn.llen('count') >= 3:
+            conn.lpop('count')
         socketio.sleep(5)
