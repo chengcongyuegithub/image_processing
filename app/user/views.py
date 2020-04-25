@@ -84,6 +84,7 @@ def unfollow():
     followeekey = 'followee:' + str(current_user.id) + ':1'  # 当前执行操作的人关注了那些人
     conn.zrem(followerkey, current_user.id)
     conn.zrem(followeekey, userid)
+    fireEvent(EventModel(EventType.UNFOLLOW, current_user.id, EntityType.USER, userid, userid,{}))
     return jsonify(code=200)
 
 

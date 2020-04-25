@@ -13,6 +13,8 @@ from event.model import EventType, EventModel, EntityType
 @login_required
 def detail(dynamicid):
     dynamic = Dynamic.query.filter_by(id=dynamicid).first()
+    if dynamic==None:
+        abort(404)
     dict = showdynamic(dynamic, True)
     return render_template('dynamicdetail.html', dynamic=dict)
 
@@ -97,7 +99,7 @@ def delete():
         if (flag == False):
             fdfs_client.delete(img.url[len(fdfs_addr):])
             db.session.delete(img)
-        db.session.commit()
+    db.session.commit()
     # 处理评论
     comments = Comment.query.filter_by(entityType=EntityType.DYNAMIC.value, entityId=dynamicid).all()
     for comment in comments:
