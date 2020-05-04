@@ -29,9 +29,13 @@ $(document).ready(function () {
                          if(res['code']=='200'){
                             $('#albumdetailmodel').modal('hide');
                             $('#choose').remove();
-                         }else
+                         }else if(res['code']=='201')
                          {
                              window.location.reload();
+                         }else
+                         {
+                            alertmsg=res['message'];
+                            $('#alertmodel').modal('show');
                          }
                     }
                   });

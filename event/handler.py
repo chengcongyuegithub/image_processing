@@ -143,12 +143,12 @@ class TaskEventHandler(EventHandler):
     def dohandler(self, eventModel):
         if eventModel.dict['task'] == 'deleteinbatch':
             task = largetaskexecutor.submit(deleteinbatch, eventModel.actorId, eventModel.entityId)
-            if task.result():
+            #if task.result():
                 # message = Message(-1, eventModel.entityOwnerId,'您刚刚' + eventModel.dict['action'] + '了名称为 ' + eventModel.dict['orginlname'] + ' 的相册信息和内容',MessageType.NOTICE)
                 # db.session.add(message)
                 # db.session.commit()
                 # socketio.emit('noreadmsg', {'data': '20'})
-                print('!!!!')
+                #print('!!!!')
         elif eventModel.dict['task'] == 'srcnn_process':
             if ImageType(eventModel.dict['action']) == ImageType.SRCNN:  # 清晰化处理
                 print('清晰化处理')
@@ -159,11 +159,11 @@ class TaskEventHandler(EventHandler):
                 task = largetaskexecutor.submit(srcnn_process, eventModel.entityId, eventModel.dict['albumid'],
                                                 eventModel.entityOwnerId, eventModel.dict['action'],
                                                 eventModel.dict['time'])
-            if task.result():
+            #if task.result():
                 # message = Message(-1, eventModel.entityOwnerId,'图片放大已经完成，请访问图片所在的相册',MessageType.NOTICE)
                 # db.session.add(message)
                 # db.session.commit()
-                print('!!!!')
+                #print('!!!!')
 
     def getSupportEventTypes(self):
         return [EventType.TASK]

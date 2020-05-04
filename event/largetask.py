@@ -34,7 +34,7 @@ def srcnn_process(imgid, albumid, userid, action, times=1):
     img = cv.imdecode(np.frombuffer(imgContent, np.uint8), cv.IMREAD_COLOR)
     g1 = tf.Graph()
     with tf.Session(graph=g1) as sess:
-        srcnn = SRCNN(sess, "\srcnn\checkpoint")
+        srcnn = SRCNN(sess, "\srcnn\checkpoint\srcnn_21")
         if ImageType(action) == ImageType.SRCNN:
             print('清晰化处理')
             img = srcnn.superresolution(img)

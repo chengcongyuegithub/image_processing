@@ -71,6 +71,16 @@ $(document).ready(function(){
         $('#sendmsgmodel-part').load('/user/sendmessage', {nickname:nickname}, function () {
                 $('.sendmsgbtn').click(function () {
                         var content=$('#messagecontent').val();
+                        //去除所有空格
+                        //str=str.replace(/\s+/g,"");
+                        //去除两边空格
+                        content=content.replace(/^\s+|\s+$/g,"");
+                        if(content.length==0)
+                        {
+                            alertmsg="私信不能为空";
+                            $('#alertmodel').modal('show');
+                            return ;
+                        }
                         $.ajax({
                             url: '/user/sendmsg',
                             type: 'post',

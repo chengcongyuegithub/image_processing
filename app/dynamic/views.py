@@ -166,9 +166,6 @@ def comment():
 def deletecomment():
     data = json.loads(request.get_data(as_text=True))
     commentid = data['commentid']
-    #comment = Comment.query.filter_by(id=commentid).first()
-    #db.session.delete(comment)
-    #db.session.commit()
     commentlist=[]
     deletecomments(int(commentid),commentlist)
     return jsonify(code=200,commentlist=commentlist)

@@ -14,7 +14,6 @@ class SRCNN(object):
     def build_model(self):
         self.test = tf.placeholder(tf.float32, [None, None, None, None], name='test')
         self.weights = {
-            # 论文中为提高训练速度的设置 n1=32 n2=16
             'w1': tf.Variable(tf.random_normal([9, 9, 1, 64], stddev=1e-3), name='w1'),
             'w2': tf.Variable(tf.random_normal([1, 1, 64, 32], stddev=1e-3), name='w2'),
             'w3': tf.Variable(tf.random_normal([5, 5, 32, 1], stddev=1e-3), name='w3')
@@ -67,8 +66,10 @@ class SRCNN(object):
     def model(self):
         conv1 = tf.nn.relu(
             tf.nn.conv2d(self.test, self.weights['w1'], strides=[1, 1, 1, 1], padding='SAME') + self.biases['b1'])
+        #poolconv1 = tf.nn.max_pool(conv1, ksize=[1, 2, 2, 1], strides=[1, 1, 1, 1], padding="SAME")
         conv2 = tf.nn.relu(
             tf.nn.conv2d(conv1, self.weights['w2'], strides=[1, 1, 1, 1], padding='SAME') + self.biases['b2'])
+        #poolconv2 = tf.nn.max_pool(conv2, ksize=[1, 2, 2, 1], strides=[1, 1, 1, 1], padding="SAME")
         conv3 = tf.nn.conv2d(conv2, self.weights['w3'], strides=[1, 1, 1, 1], padding='SAME') + self.biases['b3']
         return conv3
 
@@ -81,6 +82,7 @@ class SRCNN(object):
             ckpt_name = os.path.basename(ckpt.model_checkpoint_path)
             s = os.path.join(checkpoint_dir, ckpt_name)
             self.saver.restore(self.sess, s)
+            print(ckpt_name[12:])
             return True, ckpt_name[12:]
         else:
             return False

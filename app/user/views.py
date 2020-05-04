@@ -305,7 +305,7 @@ def message():
     msglist = db.session.query(Message.id, Message.content, Message.createtime, Message.hasRead, Message.action,Message.extra,
                                User.nickname,User.id,
                                User.head_url).outerjoin(User, Message.fromId == User.id).filter(
-        Message.toId == current_user.id).order_by(Message.createtime.desc()).limit(10).all()
+        Message.toId == current_user.id, Message.hasRead==0).order_by(Message.createtime.desc()).limit(10).all()
     msgdiclist = []
     for msg in msglist:
         print(type(msg))

@@ -52,6 +52,8 @@ def delete():
     imgid = data['imgid']
     albumid = data['albumid']
     img = Image.query.filter_by(id=imgid).first()
+    if img.dynamic_id!=-1:
+        return jsonify(code=400,message='该图片发布到动态中，如果想删除，请先删除动态')
     imgs = Image.query.filter_by(orig_id=imgid).all()
     if len(imgs):
         for im in imgs:
@@ -139,7 +141,7 @@ def superresolution():
             return jsonify(code=201, message='得到的图片较大，稍后请刷新相册页面')
         else:  # 小图片直接处理
             with tf.Session() as sess:
-                srcnn = SRCNN(sess, "\srcnn\checkpoint")
+                srcnn = SRCNN(sess, "\srcnn\checkpoint\srcnn_21")
                 img = srcnn.superresolution(img)
             img = Img.fromarray(img)
             f = BytesIO()
@@ -201,7 +203,7 @@ def compare():
         imgContent = fdfs_client.downloadbyBuffer(orginimg.url[len(fdfs_addr):])
         orgimg = cv.imdecode(np.frombuffer(imgContent, np.uint8), cv.IMREAD_COLOR)
         with tf.Session() as sess:
-            srcnn = SRCNN(sess, "../srcnn/checkpoint")
+            srcnn = SRCNN(sess, "../srcnn/checkpoint/srcnn_21")
             img = srcnn.upscaling(orgimg, times, False)
         img = Img.fromarray(img)
         f = BytesIO()
